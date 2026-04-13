@@ -1,0 +1,44 @@
+[
+  {
+    "SAP Material": 50465241,
+    "old stkcode": "7065019083711002",
+    "Material Description": "THERMOSENSOR 7379993034",
+    "Bin location": "7065PAC2141",
+    "Department ": "Packaging",
+    "Machine ": "Pasteurizer",
+    "minimum QTY": 1,
+    "maximum QTY": 4,
+    "Stock on hand ": 2,
+    "Unit cost ": 114716.725,
+    "Total value": 229433.45,
+    "Currency": "UGX"
+  },
+  {
+    "SAP Material": 50465281,
+    "old stkcode": "7060000037",
+    "Material Description": "CENTRIFUGAL PUMP",
+    "Bin location": "7065PAC2142",
+    "Department ": "Packaging",
+    "Machine ": "Pasteurizer",
+    "minimum QTY": 1,
+    "maximum QTY": 1,
+    "Stock on hand ": 0,
+    "Unit cost ": 450000,
+    "Total value": 0,
+    "Currency": "UGX"
+  },
+  {
+    "SAP Material": 50465282,
+    "old stkcode": "7060000038",
+    "Material Description": "BEARING KIT",
+    "Bin location": "7065PAC2143",
+    "Department ": "Packaging",
+    "Machine ": "Filler",
+    "minimum QTY": 2,
+    "maximum QTY": 6,
+    "Stock on hand ": 1,
+    "Unit cost ": 25000,
+    "Total value": 25000,
+    "Currency": "UGX"
+  }
+]
