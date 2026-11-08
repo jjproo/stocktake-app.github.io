@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="./css/style.css?v=cbfec6c6c8" />
+  <link rel="stylesheet" href="./css/style.css?v=444872b45e" />
 </head>
 <body>
 
@@ -122,10 +122,14 @@
             </g>
           </svg>
           <div class="reorder-content">
-            <span class="reorder-source">SAP ERP / POWER BI</span>
+            <span class="reorder-source">IMPORTED INVENTORY</span>
             <h2 id="reorderHeading">Reorder triggers</h2>
-            <p>Open the bookmarked report to review spare parts flagged for replenishment.</p>
-            <a class="reorder-link" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="View reorder triggers (opens in a new tab)">View reorder triggers <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+            <p>Export stockouts, low stock, and items for review from your imported inventory.</p>
+            <button type="button" class="reorder-link" id="exportReorderTriggersBtn">
+              Export to Excel
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+            <a class="reorder-report-link" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="Open Power BI report (opens in a new tab)">Open Power BI report <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
           </div>
         </section>
 
@@ -363,10 +367,10 @@
             <p class="page-sub">Items requiring immediate attention</p>
           </div>
           <div class="btn-group">
-            <a class="btn-ghost" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="View reorder triggers (opens in a new tab)">View reorder triggers</a>
+            <a class="btn-ghost" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="Open Power BI report (opens in a new tab)">Open Power BI report</a>
             <button class="btn-primary" id="exportAlertsBtn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export Alerts
+              Export to Excel
             </button>
           </div>
         </div>
@@ -560,6 +564,6 @@
   </button>
 </nav>
 
-<script src="./js/app.js?v=1a2ff03f99"></script>
+<script src="./js/app.js?v=8fc40e34eb"></script>
 </body>
 </html>

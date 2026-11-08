@@ -781,6 +781,7 @@ $('exportInventoryBtn')?.addEventListener('click', () => {
 });
 
 $('exportAlertsBtn')?.addEventListener('click', exportAlertsExcel);
+$('exportReorderTriggersBtn')?.addEventListener('click', exportAlertsExcel);
 $('goToAlertsBtn')?.addEventListener('click', () => setActiveTab('alerts'));
 
 $('addItemBtn')?.addEventListener('click', () => {
