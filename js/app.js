@@ -125,15 +125,17 @@ function escapeAttr(str) { return escapeHtml(str); }
 function cssEscape(str) { return String(str).replace(/"/g, '\\"'); }
 
 /* ── Excel Export ───────────────────────────────────────── */
-function downloadExcel(rows, sheetName, filename) {
+function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false } = {}) {
   if (typeof XLSX === 'undefined') {
     alert('Excel export library not loaded. Open through a local server or while online once.');
     return;
   }
   const ws = XLSX.utils.json_to_sheet(rows);
+  if (columnWidths) ws['!cols'] = columnWidths.map(wch => ({ wch }));
+  if (autoFilter) ws['!autofilter'] = { ref: ws['!ref'] };
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filename);
+  XLSX.writeFile(wb, filename, { cellStyles: Boolean(columnWidths) });
 }
 
 /* ── IndexedDB ──────────────────────────────────────────── */
@@ -588,10 +590,16 @@ function exportAlertsExcel() {
     Stock_on_hand: it.QtyOnHand || 0,
     minimum_QTY: it.MinLevel ?? '',
     maximum_QTY: it.MaxLevel ?? '',
+    'To buy': '',
+    supplier: '',
+    slot: '',
     Status: getStatus(it)
   }));
   if (rows.length === 0) return alert('No stock alerts found.');
-  downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx');
+  downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx', {
+    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 12, 20, 14, 15],
+    autoFilter: true
+  });
 }
 
 /* ── Event Delegation ───────────────────────────────────── */
