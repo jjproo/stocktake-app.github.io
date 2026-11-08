@@ -101,13 +101,11 @@ function normalizeItem(raw) {
   const stock = raw.StockCode ?? raw['Stock Code'] ?? raw['SAP Material'] ?? raw.Material;
   const desc = raw.Description ?? raw['Material Description'] ?? raw['Item Description'];
   if (!stock || !desc) return null;
-  const onOrderHeader = Object.keys(raw).find(header => /^on[\s_]*order$/i.test(header.trim()));
   return {
     StockCode:    cleanText(stock),
     Description:  cleanText(desc),
     AlternateKey: cleanText(raw.AlternateKey ?? raw['old stkcode'] ?? raw['old stk code']),
     QtyOnHand:    toNumberOrNull(raw.QtyOnHand ?? raw['Stock on hand '] ?? raw['Stock on hand'] ?? raw.Qty ?? raw['Plant stock']) ?? 0,
-    OnOrder:      toNumberOrNull(onOrderHeader ? raw[onOrderHeader] : null),
     DefaultBin:   cleanText(raw.DefaultBin ?? raw['Bin location'] ?? raw['Default Bin'] ?? raw.Bin ?? raw.BIN),
     MinLevel:     toNumberOrNull(raw.MinLevel ?? raw['minimum QTY'] ?? raw.Min ?? raw.min),
     MaxLevel:     toNumberOrNull(raw.MaxLevel ?? raw['maximum QTY'] ?? raw.Max ?? raw.max),
@@ -127,13 +125,12 @@ function escapeAttr(str) { return escapeHtml(str); }
 function cssEscape(str) { return String(str).replace(/"/g, '\\"'); }
 
 /* ── Excel Export ───────────────────────────────────────── */
-function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false, prepareSheet } = {}) {
+function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false } = {}) {
   if (typeof XLSX === 'undefined') {
     alert('Excel export library not loaded. Open through a local server or while online once.');
     return;
   }
   const ws = XLSX.utils.json_to_sheet(rows);
-  prepareSheet?.(ws);
   if (columnWidths) ws['!cols'] = columnWidths.map(wch => ({ wch }));
   if (autoFilter) ws['!autofilter'] = { ref: ws['!ref'] };
   const wb = XLSX.utils.book_new();
@@ -172,7 +169,8 @@ function saveSettings() {
 
 function loadAll() {
   tx('inventory').getAll().onsuccess = e => {
-    inventoryData = e.target.result || [];
+    // Drop the retired field from inventory saved by older releases.
+    inventoryData = (e.target.result || []).map(({ OnOrder, ...item }) => item);
     tx('stocktake').getAll().onsuccess = e2 => {
       stocktake = {};
       (e2.target.result || []).forEach(r => {
@@ -593,36 +591,14 @@ function exportAlertsExcel() {
     Stock_on_hand: it.QtyOnHand || 0,
     minimum_QTY: it.MinLevel ?? '',
     maximum_QTY: it.MaxLevel ?? '',
-    'On order': it.OnOrder ?? '',
-    'To buy': '',
     supplier: '',
     slot: '',
     Status: getStatus(it)
   }));
   if (rows.length === 0) return alert('No stock alerts found.');
-  if (rows.every(item => item['On order'] === '') &&
-      !confirm('This import has no On order quantities for the stock alerts. Select Cancel to re-upload the updated report, or OK to export with blank On order and To buy cells.')) {
-    setActiveTab('upload');
-    return;
-  }
   downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx', {
-    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 14, 12, 20, 14, 15],
-    autoFilter: true,
-    prepareSheet(sheet) {
-      rows.forEach((item, index) => {
-        const row = index + 2;
-        const max = item.maximum_QTY;
-        const onOrder = item['On order'];
-        const value = Number.isFinite(max) && Number.isFinite(onOrder)
-          ? Math.max(0, max - onOrder - item.Stock_on_hand)
-          : '';
-        sheet[`J${row}`] = {
-          t: typeof value === 'number' ? 'n' : 's',
-          v: value,
-          f: `IF(COUNT(F${row},H${row}:I${row})=3,MAX(0,H${row}-I${row}-F${row}),"")`
-        };
-      });
-    }
+    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 20, 14, 15],
+    autoFilter: true
   });
 }
 
@@ -754,8 +730,7 @@ function importInventoryFile(file) {
       saveInventory();
       saveStocktake();
       renderVisibleTab();
-      const withOnOrder = normalized.filter(item => item.OnOrder !== null).length;
-      alert(`Imported ${formatNumber(normalized.length)} items from ${name}. On order quantities found for ${formatNumber(withOnOrder)} items.`);
+      alert(`Imported ${formatNumber(normalized.length)} items from ${name}.`);
     } catch (err) {
       console.error(err);
       alert('Import failed. Check your SAP export format.');
