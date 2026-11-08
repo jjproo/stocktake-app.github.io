@@ -414,9 +414,7 @@ a { color: var(--brand); text-decoration: none; }
   width: min(44%, 420px);
   height: 100%;
   mask-image: linear-gradient(90deg, transparent, #000 35%);
-  animation: reorder-entrance .55s ease-out both;
 }
-@keyframes reorder-entrance { from { opacity: 0; transform: translateY(8px); } }
 .reorder-content { max-width: 56ch; }
 .reorder-source {
   display: inline-block;
@@ -965,9 +963,67 @@ button[data-del]:hover { background: var(--danger-light); }
   .mob-nav-btn { min-width: 0; padding-inline: 7px; }
 }
 
+/* ── Motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .tab-section { animation: page-arrive .32s ease-out; }
+
+  .reorder-banner::before {
+    content: '';
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(108deg, transparent 28%, #64e0b222 54%, transparent 78%);
+    animation: banner-sweep 3.6s ease-in-out both;
+  }
+
+  .reorder-art { animation: illustration-float 4s ease-in-out; }
+  .reorder-link { transition: background .18s ease, transform .18s ease; }
+  .reorder-link svg { transition: transform .18s ease; }
+  .reorder-link:active { transform: scale(.97); }
+  .reorder-link:hover svg, .reorder-link:focus-visible svg { transform: translateY(2px); }
+
+  .kpi-card {
+    animation: card-arrive .45s cubic-bezier(.2,.75,.3,1) backwards;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .kpi-card:nth-child(2) { animation-delay: 45ms; }
+  .kpi-card:nth-child(3) { animation-delay: 90ms; }
+  .kpi-card:nth-child(4) { animation-delay: 135ms; }
+  .kpi-card:nth-child(5) { animation-delay: 180ms; }
+  .kpi-card:nth-child(6) { animation-delay: 225ms; }
+  .kpi-card:nth-child(7) { animation-delay: 270ms; }
+  .kpi-card:nth-child(8) { animation-delay: 315ms; }
+  .health-ring.has-inventory { animation: chart-arrive .55s ease-out .15s backwards; }
+  .health-legend button:active { transform: scale(.98); }
+
+  @media (hover: hover) {
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  }
+}
+
+@keyframes page-arrive {
+  from { opacity: .55; transform: translateY(7px); }
+}
+@keyframes card-arrive {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@keyframes banner-sweep {
+  from { transform: translateX(-90%); opacity: 0; }
+  22%, 62% { opacity: 1; }
+  to { transform: translateX(90%); opacity: 0; }
+}
+@keyframes illustration-float {
+  0% { opacity: 0; transform: translateY(10px); }
+  18% { opacity: 1; }
+  55% { transform: translateY(-6px); }
+}
+@keyframes chart-arrive {
+  from { opacity: .45; transform: scale(.92); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
-  .reorder-art { animation: none; }
 }
 
 /* ── Scrollbar Styling ───────────────────────────────────── */
