@@ -101,11 +101,13 @@ function normalizeItem(raw) {
   const stock = raw.StockCode ?? raw['Stock Code'] ?? raw['SAP Material'] ?? raw.Material;
   const desc = raw.Description ?? raw['Material Description'] ?? raw['Item Description'];
   if (!stock || !desc) return null;
+  const onOrderHeader = Object.keys(raw).find(header => /^on[\s_]*order$/i.test(header.trim()));
   return {
     StockCode:    cleanText(stock),
     Description:  cleanText(desc),
     AlternateKey: cleanText(raw.AlternateKey ?? raw['old stkcode'] ?? raw['old stk code']),
     QtyOnHand:    toNumberOrNull(raw.QtyOnHand ?? raw['Stock on hand '] ?? raw['Stock on hand'] ?? raw.Qty ?? raw['Plant stock']) ?? 0,
+    OnOrder:      toNumberOrNull(onOrderHeader ? raw[onOrderHeader] : null),
     DefaultBin:   cleanText(raw.DefaultBin ?? raw['Bin location'] ?? raw['Default Bin'] ?? raw.Bin ?? raw.BIN),
     MinLevel:     toNumberOrNull(raw.MinLevel ?? raw['minimum QTY'] ?? raw.Min ?? raw.min),
     MaxLevel:     toNumberOrNull(raw.MaxLevel ?? raw['maximum QTY'] ?? raw.Max ?? raw.max),
@@ -125,12 +127,13 @@ function escapeAttr(str) { return escapeHtml(str); }
 function cssEscape(str) { return String(str).replace(/"/g, '\\"'); }
 
 /* ── Excel Export ───────────────────────────────────────── */
-function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false } = {}) {
+function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false, prepareSheet } = {}) {
   if (typeof XLSX === 'undefined') {
     alert('Excel export library not loaded. Open through a local server or while online once.');
     return;
   }
   const ws = XLSX.utils.json_to_sheet(rows);
+  prepareSheet?.(ws);
   if (columnWidths) ws['!cols'] = columnWidths.map(wch => ({ wch }));
   if (autoFilter) ws['!autofilter'] = { ref: ws['!ref'] };
   const wb = XLSX.utils.book_new();
@@ -590,6 +593,7 @@ function exportAlertsExcel() {
     Stock_on_hand: it.QtyOnHand || 0,
     minimum_QTY: it.MinLevel ?? '',
     maximum_QTY: it.MaxLevel ?? '',
+    'On order': it.OnOrder ?? '',
     'To buy': '',
     supplier: '',
     slot: '',
@@ -597,8 +601,23 @@ function exportAlertsExcel() {
   }));
   if (rows.length === 0) return alert('No stock alerts found.');
   downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx', {
-    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 12, 20, 14, 15],
-    autoFilter: true
+    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 14, 12, 20, 14, 15],
+    autoFilter: true,
+    prepareSheet(sheet) {
+      rows.forEach((item, index) => {
+        const row = index + 2;
+        const max = item.maximum_QTY;
+        const onOrder = item['On order'];
+        const value = Number.isFinite(max) && Number.isFinite(onOrder)
+          ? Math.max(0, max - onOrder - item.Stock_on_hand)
+          : '';
+        sheet[`J${row}`] = {
+          t: typeof value === 'number' ? 'n' : 's',
+          v: value,
+          f: `IF(COUNT(F${row},H${row}:I${row})=3,MAX(0,H${row}-I${row}-F${row}),"")`
+        };
+      });
+    }
   });
 }
 
