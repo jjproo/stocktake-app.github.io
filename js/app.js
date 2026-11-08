@@ -600,6 +600,11 @@ function exportAlertsExcel() {
     Status: getStatus(it)
   }));
   if (rows.length === 0) return alert('No stock alerts found.');
+  if (rows.every(item => item['On order'] === '') &&
+      !confirm('This import has no On order quantities for the stock alerts. Select Cancel to re-upload the updated report, or OK to export with blank On order and To buy cells.')) {
+    setActiveTab('upload');
+    return;
+  }
   downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx', {
     columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 14, 12, 20, 14, 15],
     autoFilter: true,
@@ -749,7 +754,8 @@ function importInventoryFile(file) {
       saveInventory();
       saveStocktake();
       renderVisibleTab();
-      alert(`Imported ${normalized.length} items from sheet: ${name}`);
+      const withOnOrder = normalized.filter(item => item.OnOrder !== null).length;
+      alert(`Imported ${formatNumber(normalized.length)} items from ${name}. On order quantities found for ${formatNumber(withOnOrder)} items.`);
     } catch (err) {
       console.error(err);
       alert('Import failed. Check your SAP export format.');
