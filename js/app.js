@@ -458,7 +458,9 @@ function renderItemsTable() {
     const tr = document.createElement('tr');
     tr.className = rowClass(s);
     const code = escapeAttr(it.StockCode);
-    tr.innerHTML = `<td class="mono">${escapeHtml(it.StockCode)}</td><td>${escapeHtml(it.Description)}</td><td class="right mono">${it.QtyOnHand ?? 0}</td><td class="hide-mobile">${escapeHtml(it.DefaultBin || '')}</td><td>${statusBadge(s)}</td>
+    tr.innerHTML = `<td class="mono">${escapeHtml(it.StockCode)}</td><td>${escapeHtml(it.Description)}</td><td class="right mono">${it.QtyOnHand ?? 0}</td>
+      <td class="right mono">${escapeHtml(it.MinLevel ?? '—')}</td><td class="right mono">${escapeHtml(it.MaxLevel ?? '—')}</td>
+      <td class="hide-mobile">${escapeHtml(it.DefaultBin || '')}</td><td>${statusBadge(s)}</td>
       <td><div class="btn-group item-actions"><button type="button" class="btn-ghost" data-add-priority="${code}">Add to Buy Priorities</button><button type="button" data-del="${code}">Del</button></div></td>`;
     return tr;
   }, 'items');
