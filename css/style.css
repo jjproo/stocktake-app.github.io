@@ -456,6 +456,11 @@ a { color: var(--brand); text-decoration: none; }
 }
 .reorder-report-link:hover { color: #fff; text-decoration: underline; }
 .reorder-report-link:focus-visible { outline-color: white; }
+.priority-shortcut { background: transparent; border: 0; }
+.priority-feedback { display: inline-block; padding: 0 20px 16px; color: var(--text-2); }
+#buyPriorityTable td { overflow-wrap: anywhere; }
+#buyPriorityTable td:nth-child(4) { min-width: 160px; max-width: 320px; }
+.item-actions { flex-wrap: nowrap; justify-content: flex-end; }
 .dashboard-section-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 5px 16px; margin-bottom: 12px; }
 .dashboard-section-heading h2 { font-size: 17px; letter-spacing: -.025em; }
 .dashboard-section-heading span { color: var(--muted); font-size: 11px; }

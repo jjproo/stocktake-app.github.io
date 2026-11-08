@@ -39,6 +39,9 @@ document.addEventListener('click', async e => {
 let inventoryData = [];
 let stocktake = {};
 let settings = { lowStockThreshold: 10, sessionName: '' };
+const buyPriorities = new Map();
+const priorityStoragePrefix = 'buyPriority:';
+const priorityRank = { High: 0, Normal: 1, Low: 2 };
 let db;
 let activeTab = 'dashboard';
 const pageSize = 50;
@@ -125,17 +128,21 @@ function escapeAttr(str) { return escapeHtml(str); }
 function cssEscape(str) { return String(str).replace(/"/g, '\\"'); }
 
 /* ── Excel Export ───────────────────────────────────────── */
-function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false } = {}) {
+function downloadExcel(rows, sheetName, filename, { columnWidths, autoFilter = false, extraSheet } = {}) {
   if (typeof XLSX === 'undefined') {
     alert('Excel export library not loaded. Open through a local server or while online once.');
     return;
   }
-  const ws = XLSX.utils.json_to_sheet(rows);
-  if (columnWidths) ws['!cols'] = columnWidths.map(wch => ({ wch }));
-  if (autoFilter) ws['!autofilter'] = { ref: ws['!ref'] };
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filename, { cellStyles: Boolean(columnWidths) });
+  function appendSheet(data, name, widths, filter) {
+    const sheet = XLSX.utils.json_to_sheet(data);
+    if (widths) sheet['!cols'] = widths.map(wch => ({ wch }));
+    if (filter) sheet['!autofilter'] = { ref: sheet['!ref'] };
+    XLSX.utils.book_append_sheet(wb, sheet, name);
+  }
+  appendSheet(rows, sheetName, columnWidths, autoFilter);
+  if (extraSheet) appendSheet(extraSheet.rows, extraSheet.name, extraSheet.columnWidths, true);
+  XLSX.writeFile(wb, filename, { cellStyles: Boolean(columnWidths || extraSheet?.columnWidths) });
 }
 
 /* ── IndexedDB ──────────────────────────────────────────── */
@@ -177,7 +184,12 @@ function loadAll() {
         stocktake[r.StockCode] = { CountedQty: r.CountedQty ?? null, UpdatedAt: r.UpdatedAt ?? null };
       });
       tx('settings').getAll().onsuccess = e3 => {
-        (e3.target.result || []).forEach(r => { settings[r.key] = r.value; });
+        (e3.target.result || []).forEach(record => {
+          if (record.key.startsWith(priorityStoragePrefix)) buyPriorities.set(record.value.id, record.value);
+          else settings[record.key] = record.value;
+        });
+        $('saveBuyPriority').disabled = false;
+        updatePriorityCount();
         if ($('lowStockThreshold')) $('lowStockThreshold').value = settings.lowStockThreshold ?? 10;
         if ($('sessionName'))       $('sessionName').value       = settings.sessionName ?? '';
         renderVisibleTab();
@@ -214,6 +226,7 @@ function renderVisibleTab() {
   else if (activeTab === 'alerts')    renderAlertsTable();
   else if (activeTab === 'items')     renderItemsTable();
   else if (activeTab === 'stocktake') renderStocktakeTable();
+  else if (activeTab === 'priorities') renderBuyPriorities();
   updateDashboard();
 }
 
@@ -444,7 +457,9 @@ function renderItemsTable() {
     const s = getStatus(it);
     const tr = document.createElement('tr');
     tr.className = rowClass(s);
-    tr.innerHTML = `<td class="mono">${escapeHtml(it.StockCode)}</td><td>${escapeHtml(it.Description)}</td><td class="right mono">${it.QtyOnHand ?? 0}</td><td class="hide-mobile">${escapeHtml(it.DefaultBin || '')}</td><td>${statusBadge(s)}</td><td class="center"><button data-del="${escapeAttr(it.StockCode)}">Del</button></td>`;
+    const code = escapeAttr(it.StockCode);
+    tr.innerHTML = `<td class="mono">${escapeHtml(it.StockCode)}</td><td>${escapeHtml(it.Description)}</td><td class="right mono">${it.QtyOnHand ?? 0}</td><td class="hide-mobile">${escapeHtml(it.DefaultBin || '')}</td><td>${statusBadge(s)}</td>
+      <td><div class="btn-group item-actions"><button type="button" class="btn-ghost" data-add-priority="${code}">Add to Buy Priorities</button><button type="button" data-del="${code}">Del</button></div></td>`;
     return tr;
   }, 'items');
 }
@@ -581,6 +596,56 @@ function exportCycleCountSheet() {
   downloadExcel(rows, 'CycleCount', 'CycleCountSheet.xlsx');
 }
 
+function sortedBuyPriorities() {
+  return [...buyPriorities.values()].sort((a, b) =>
+    Number(a.done) - Number(b.done) || priorityRank[a.level] - priorityRank[b.level] || a.createdAt - b.createdAt);
+}
+
+function matchingPriorityItems(priority) {
+  const reference = priority.reference.toLowerCase();
+  const field = priority.type === 'bin' ? 'DefaultBin' : 'StockCode';
+  return inventoryData.filter(item => String(item[field] ?? '').trim().toLowerCase() === reference);
+}
+
+function updatePriorityCount() {
+  const count = [...buyPriorities.values()].filter(priority => !priority.done).length;
+  $('prioritiesBadge').textContent = formatNumber(count);
+  $('prioritiesBadge').hidden = count === 0;
+  $('openPriorityCount').textContent = `(${formatNumber(count)})`;
+}
+
+function renderBuyPriorities() {
+  const priorities = sortedBuyPriorities();
+  $('buyPriorityEmpty').hidden = priorities.length > 0;
+  $('buyPriorityTable').tBodies[0].innerHTML = priorities.map(priority => {
+    const items = matchingPriorityItems(priority);
+    const match = items.length === 1 ? items[0].Description : items.length > 1
+      ? `${formatNumber(items.length)} matching materials` : 'No inventory match';
+    const type = priority.type === 'bin' ? 'Bin' : 'Material';
+    const badge = priority.level === 'High' ? 'pill-danger' : priority.level === 'Normal' ? 'pill-warning' : 'pill-ok';
+    return `<tr>
+      <td><span class="pill ${badge}">${escapeHtml(priority.level)}</span></td>
+      <td>${type} ${escapeHtml(priority.reference)}</td>
+      <td>${escapeHtml(match)}</td><td>${escapeHtml(priority.note)}</td>
+      <td>${priority.done ? 'Done' : 'Open'}</td>
+      <td><button type="button" class="btn-ghost" data-priority-toggle="${escapeAttr(priority.id)}">${priority.done ? 'Reopen' : 'Mark done'}</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function saveBuyPriority(priority) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('settings', 'readwrite');
+    transaction.oncomplete = () => {
+      buyPriorities.set(priority.id, priority);
+      updatePriorityCount();
+      resolve();
+    };
+    transaction.onabort = () => reject(transaction.error);
+    transaction.objectStore('settings').put({ key: priorityStoragePrefix + priority.id, value: priority });
+  });
+}
+
 function exportAlertsExcel() {
   const rows = alertItems().map(it => ({
     SAP_Material: it.StockCode,
@@ -595,10 +660,28 @@ function exportAlertsExcel() {
     slot: '',
     Status: getStatus(it)
   }));
-  if (rows.length === 0) return alert('No stock alerts found.');
-  downloadExcel(rows, 'StockAlerts', 'Stock_Alerts_Report.xlsx', {
+  const priorityRows = sortedBuyPriorities().filter(priority => !priority.done).flatMap(priority => {
+    const items = matchingPriorityItems(priority);
+    return (items.length ? items : [null]).map(item => ({
+      Priority: priority.level,
+      'Look up by': priority.type === 'bin' ? 'Bin location' : 'Material code',
+      Reference: priority.reference,
+      SAP_Material: item?.StockCode ?? '',
+      Material_Description: item?.Description ?? '',
+      Bin_location: item?.DefaultBin ?? '',
+      Stock_on_hand: item?.QtyOnHand ?? '',
+      'Follow-up note': priority.note,
+      'Inventory match': item ? 'Matched' : 'No match'
+    }));
+  });
+  if (rows.length === 0 && priorityRows.length === 0) return alert('No stock alerts or open buy priorities found.');
+  const filename = 'Stock_Alerts_Report.xlsx';
+  const prioritySheet = { name: 'Buy Priorities', rows: priorityRows, columnWidths: [12, 18, 18, 16, 42, 18, 17, 42, 18] };
+  if (!rows.length) return downloadExcel(priorityRows, prioritySheet.name, filename, { columnWidths: prioritySheet.columnWidths, autoFilter: true });
+  downloadExcel(rows, 'StockAlerts', filename, {
     columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 20, 14, 15],
-    autoFilter: true
+    autoFilter: true,
+    extraSheet: priorityRows.length ? prioritySheet : undefined
   });
 }
 
@@ -805,6 +888,57 @@ $('exportInventoryBtn')?.addEventListener('click', () => {
 $('exportAlertsBtn')?.addEventListener('click', exportAlertsExcel);
 $('exportReorderTriggersBtn')?.addEventListener('click', exportAlertsExcel);
 $('goToAlertsBtn')?.addEventListener('click', () => setActiveTab('alerts'));
+
+$('itemsTable').addEventListener('click', event => {
+  const button = event.target.closest('[data-add-priority]');
+  if (!button) return;
+  $('priorityType').value = 'material';
+  $('priorityReference').value = button.dataset.addPriority;
+  setActiveTab('priorities');
+  $('priorityLevel').focus();
+});
+
+$('buyPriorityForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const reference = $('priorityReference').value.trim();
+  if (!reference) { $('priorityReference').focus(); return; }
+  const button = $('saveBuyPriority');
+  button.disabled = true;
+  try {
+    await saveBuyPriority({
+      id: crypto.randomUUID(), type: $('priorityType').value, reference,
+      level: $('priorityLevel').value, note: $('priorityNote').value.trim(),
+      done: false, createdAt: Date.now()
+    });
+    $('priorityReference').value = '';
+    $('priorityNote').value = '';
+    $('priorityFeedback').textContent = 'Priority saved.';
+    renderBuyPriorities();
+    if (activeTab === 'priorities') $('priorityReference').focus();
+  } catch (error) {
+    $('priorityFeedback').textContent = 'Could not save the priority. Please try again.';
+    console.error(error);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$('buyPriorityTable').addEventListener('click', async event => {
+  const button = event.target.closest('[data-priority-toggle]');
+  if (!button) return;
+  const priority = buyPriorities.get(button.dataset.priorityToggle);
+  if (!priority) return;
+  button.disabled = true;
+  try {
+    await saveBuyPriority({ ...priority, done: !priority.done });
+    renderBuyPriorities();
+    if (activeTab === 'priorities') $('buyPriorityTable').querySelector(`[data-priority-toggle="${priority.id}"]`)?.focus();
+  } catch (error) {
+    $('priorityFeedback').textContent = 'Could not update the priority. Please try again.';
+    button.disabled = false;
+    console.error(error);
+  }
+});
 
 $('addItemBtn')?.addEventListener('click', () => {
   const newItem = normalizeItem({

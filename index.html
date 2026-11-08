@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="./css/style.css?v=a24b5b5ba4" />
+  <link rel="stylesheet" href="./css/style.css?v=85c8de92e4" />
 </head>
 <body>
 
@@ -49,6 +49,11 @@
         <span>Items</span>
       </button>
       <div class="nav-section-label" style="margin-top:16px">Operations</div>
+      <button class="nav-item" data-tab="priorities">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 1c5-5 9 4 14-1v10c-5 5-9-4-14 1"/></svg>
+        <span>Buy Priorities</span>
+        <span class="nav-badge" id="prioritiesBadge" hidden>0</span>
+      </button>
       <button class="nav-item" data-tab="stocktake">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         <span>Stocktake</span>
@@ -129,6 +134,7 @@
               Export to Excel
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
+            <button type="button" class="reorder-report-link priority-shortcut" data-tab="priorities">Buy Priorities <span id="openPriorityCount">(0)</span></button>
             <a class="reorder-report-link" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="Open Power BI report (opens in a new tab)">Open Power BI report <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
           </div>
         </section>
@@ -536,6 +542,47 @@
         </div>
       </section>
 
+      <section id="priorities" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Buy Priorities</h1>
+            <p class="page-sub">Save materials or bins to follow up. Open priorities are included in the reorder Excel export.</p>
+          </div>
+        </div>
+        <form class="section-card" id="buyPriorityForm">
+          <div class="section-card-header"><h2 class="section-card-title">Add a priority</h2></div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="priorityType">Look up by</label>
+              <select id="priorityType"><option value="material">Material code</option><option value="bin">Bin location</option></select>
+            </div>
+            <div class="form-group">
+              <label for="priorityReference">Material code or bin location</label>
+              <input id="priorityReference" required maxlength="80" placeholder="Enter the exact code or bin" />
+            </div>
+            <div class="form-group">
+              <label for="priorityLevel">Priority</label>
+              <select id="priorityLevel"><option>High</option><option selected>Normal</option><option>Low</option></select>
+            </div>
+            <div class="form-group">
+              <label for="priorityNote">Follow-up note (optional)</label>
+              <input id="priorityNote" maxlength="200" placeholder="For example, confirm supplier lead time" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" id="saveBuyPriority" disabled>Save priority</button>
+          <span class="priority-feedback" id="priorityFeedback" role="status"></span>
+        </form>
+        <div class="section-card">
+          <div class="section-card-header"><h2 class="section-card-title">Saved priorities</h2></div>
+          <div class="table-wrap">
+            <table id="buyPriorityTable">
+              <thead><tr><th>Priority</th><th>Material or bin</th><th>Inventory match</th><th>Follow-up note</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="table-empty" id="buyPriorityEmpty">No priorities saved yet.</p>
+        </div>
+      </section>
     </main><!-- end content-wrap -->
   </div><!-- end main-area -->
 </div><!-- end shell -->
@@ -554,6 +601,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
     <span>Alerts</span>
   </button>
+  <button class="mob-nav-btn" data-tab="priorities" aria-label="Buy Priorities">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 1c5-5 9 4 14-1v10c-5 5-9-4-14 1"/></svg>
+    <span>Priorities</span>
+  </button>
   <button class="mob-nav-btn" data-tab="stocktake">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     <span>Stocktake</span>
@@ -564,6 +615,6 @@
   </button>
 </nav>
 
-<script src="./js/app.js?v=9b2def3b92"></script>
+<script src="./js/app.js?v=361814374b"></script>
 </body>
 </html>
