@@ -108,6 +108,7 @@ function normalizeItem(raw) {
     StockCode:    cleanText(stock),
     Description:  cleanText(desc),
     AlternateKey: cleanText(raw.AlternateKey ?? raw['old stkcode'] ?? raw['old stk code']),
+    PartNo:       cleanText(raw.PartNo ?? raw['part no']),
     QtyOnHand:    toNumberOrNull(raw.QtyOnHand ?? raw['Stock on hand '] ?? raw['Stock on hand'] ?? raw.Qty ?? raw['Plant stock']) ?? 0,
     DefaultBin:   cleanText(raw.DefaultBin ?? raw['Bin location'] ?? raw['Default Bin'] ?? raw.Bin ?? raw.BIN),
     MinLevel:     toNumberOrNull(raw.MinLevel ?? raw['minimum QTY'] ?? raw.Min ?? raw.min),
@@ -532,6 +533,20 @@ function updateDashboard() {
 }
 
 /* ── Export Functions ───────────────────────────────────── */
+const materialExportWidths = [16, 18, 42, 18, 18, 18, 24];
+
+function materialExportFields(item) {
+  return {
+    Material: item?.StockCode ?? '',
+    'old stk code': item?.AlternateKey ?? '',
+    'Material Description': item?.Description ?? '',
+    'part no': item?.PartNo ?? '',
+    BIN: item?.DefaultBin ?? '',
+    department: item?.Department ?? '',
+    Machine: item?.Machine ?? ''
+  };
+}
+
 function exportVarianceExcel() {
   if (inventoryData.length === 0) return alert('No inventory loaded.');
   const byCode = new Map(inventoryData.map(it => [it.StockCode, it]));
@@ -542,12 +557,8 @@ function exportVarianceExcel() {
     const variance = obj.CountedQty - (it.QtyOnHand || 0);
     if (variance === 0) return;
     rows.push({
+      ...materialExportFields(it),
       Session: settings.sessionName || '',
-      SAP_Material: it.StockCode,
-      Material_Description: it.Description,
-      Bin_location: it.DefaultBin || '',
-      Department: it.Department || '',
-      Machine: it.Machine || '',
       SystemQty: it.QtyOnHand || 0,
       CountedQty: obj.CountedQty,
       Variance: variance,
@@ -556,7 +567,7 @@ function exportVarianceExcel() {
     });
   });
   if (rows.length === 0) return alert('No variances found yet.');
-  downloadExcel(rows, 'Variances', 'Stocktake_Variances.xlsx');
+  downloadExcel(rows, 'Variances', 'Stocktake_Variances.xlsx', { columnWidths: materialExportWidths });
 }
 
 function exportFullCountExcel() {
@@ -564,12 +575,8 @@ function exportFullCountExcel() {
   const rows = inventoryData.map(it => {
     const counted = stocktake[it.StockCode]?.CountedQty ?? null;
     return {
+      ...materialExportFields(it),
       Session: settings.sessionName || '',
-      SAP_Material: it.StockCode,
-      Material_Description: it.Description,
-      Bin_location: it.DefaultBin || '',
-      Department: it.Department || '',
-      Machine: it.Machine || '',
       Stock_on_hand: it.QtyOnHand || 0,
       minimum_QTY: it.MinLevel ?? '',
       maximum_QTY: it.MaxLevel ?? '',
@@ -578,24 +585,20 @@ function exportFullCountExcel() {
       Variance: counted === null ? null : (counted - (it.QtyOnHand || 0))
     };
   });
-  downloadExcel(rows, 'FullCount', 'Stocktake_FullCount.xlsx');
+  downloadExcel(rows, 'FullCount', 'Stocktake_FullCount.xlsx', { columnWidths: materialExportWidths });
 }
 
 function exportCycleCountSheet() {
   if (inventoryData.length === 0) return alert('No inventory loaded.');
   const rows = inventoryData.map(it => ({
-    SAP_Material: it.StockCode,
-    Material_Description: it.Description,
-    Bin_location: it.DefaultBin || '',
-    Department: it.Department || '',
-    Machine: it.Machine || '',
+    ...materialExportFields(it),
     Stock_on_hand: it.QtyOnHand || 0,
     CountedQty: '',
     minimum_QTY: it.MinLevel ?? '',
     maximum_QTY: it.MaxLevel ?? '',
     Status: getStatus(it)
   }));
-  downloadExcel(rows, 'CycleCount', 'CycleCountSheet.xlsx');
+  downloadExcel(rows, 'CycleCount', 'CycleCountSheet.xlsx', { columnWidths: materialExportWidths });
 }
 
 function sortedBuyPriorities() {
@@ -652,18 +655,18 @@ function buildBuyPrioritySheet() {
   const rows = sortedBuyPriorities().filter(priority => !priority.done).flatMap(priority => {
     const items = matchingPriorityItems(priority);
     return (items.length ? items : [null]).map(item => ({
+      ...materialExportFields(item ?? (priority.type === 'bin'
+        ? { DefaultBin: priority.reference }
+        : { StockCode: priority.reference })),
       Priority: priority.level,
       'Look up by': priority.type === 'bin' ? 'Bin location' : 'Material code',
       Reference: priority.reference,
-      SAP_Material: item?.StockCode ?? '',
-      Material_Description: item?.Description ?? '',
-      Bin_location: item?.DefaultBin ?? '',
       Stock_on_hand: item?.QtyOnHand ?? '',
       'Follow-up note': priority.note,
       'Inventory match': item ? 'Matched' : 'No match'
     }));
   });
-  return { name: 'Buy Priorities', rows, columnWidths: [12, 18, 18, 16, 42, 18, 17, 42, 18] };
+  return { name: 'Buy Priorities', rows, columnWidths: [...materialExportWidths, 12, 18, 18, 17, 42, 18] };
 }
 
 function exportBuyPrioritiesExcel() {
@@ -674,11 +677,7 @@ function exportBuyPrioritiesExcel() {
 
 function exportAlertsExcel() {
   const rows = alertItems().map(it => ({
-    SAP_Material: it.StockCode,
-    Material_Description: it.Description,
-    Bin_location: it.DefaultBin || '',
-    Department: it.Department || '',
-    Machine: it.Machine || '',
+    ...materialExportFields(it),
     Stock_on_hand: it.QtyOnHand || 0,
     minimum_QTY: it.MinLevel ?? '',
     maximum_QTY: it.MaxLevel ?? '',
@@ -691,7 +690,7 @@ function exportAlertsExcel() {
   const filename = 'Stock_Alerts_Report.xlsx';
   if (!rows.length) return downloadExcel(prioritySheet.rows, prioritySheet.name, filename, { columnWidths: prioritySheet.columnWidths, autoFilter: true });
   downloadExcel(rows, 'StockAlerts', filename, {
-    columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 20, 14, 15],
+    columnWidths: [...materialExportWidths, 17, 16, 16, 20, 14, 15],
     autoFilter: true,
     extraSheet: prioritySheet.rows.length ? prioritySheet : undefined
   });
@@ -892,10 +891,16 @@ $('clearAllBtn')?.addEventListener('click', () => {
   renderVisibleTab();
 });
 
-$('exportInventoryBtn')?.addEventListener('click', () => {
+function exportInventoryExcel() {
   if (inventoryData.length === 0) return alert('No inventory data to export.');
-  downloadExcel(inventoryData, 'Inventory', 'InventoryData_CurrentFormat.xlsx');
-});
+  const rows = inventoryData.map(item => {
+    const { StockCode, AlternateKey, Description, PartNo, DefaultBin, Department, Machine, ...stockFields } = item;
+    return { ...materialExportFields(item), ...stockFields };
+  });
+  downloadExcel(rows, 'Inventory', 'InventoryData_CurrentFormat.xlsx', { columnWidths: materialExportWidths });
+}
+
+$('exportInventoryBtn')?.addEventListener('click', exportInventoryExcel);
 
 $('exportAlertsBtn')?.addEventListener('click', exportAlertsExcel);
 $('exportReorderTriggersBtn')?.addEventListener('click', exportAlertsExcel);
