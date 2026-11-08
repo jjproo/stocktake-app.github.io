@@ -414,7 +414,9 @@ a { color: var(--brand); text-decoration: none; }
   width: min(44%, 420px);
   height: 100%;
   mask-image: linear-gradient(90deg, transparent, #000 35%);
+  animation: reorder-entrance .55s ease-out both;
 }
+@keyframes reorder-entrance { from { opacity: 0; transform: translateY(8px); } }
 .reorder-content { max-width: 56ch; }
 .reorder-source {
   display: inline-block;
@@ -450,10 +452,59 @@ a { color: var(--brand); text-decoration: none; }
 .dashboard-detail .section-card { min-width: 0; }
 .health-body { padding: 16px 20px 20px; }
 .health-body p { color: var(--text-2); font-size: 12px; }
-.health-track { display: flex; height: 9px; overflow: hidden; border-radius: 6px; background: var(--border-light); margin: 16px 0; }
-.health-track span { flex-basis: 0; }
-.health-legend { list-style: none; display: grid; gap: 10px; }
-.health-legend li { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 9px; color: var(--text-2); font-size: 12px; }
+.health-ring {
+  width: 132px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin: 18px auto;
+  border-radius: 50%;
+  background: var(--border-light);
+  --health-good: #168269;
+  --health-low: #d98e16;
+  --health-out: #c83d48;
+  --health-review: #537bc6;
+}
+.health-ring.has-inventory {
+  background: conic-gradient(
+    var(--health-good) 0 var(--available-end),
+    var(--health-low) var(--available-end) var(--low-end),
+    var(--health-out) var(--low-end) var(--out-end),
+    var(--health-review) var(--out-end) 100%
+  );
+}
+.health-ring-center {
+  width: 106px;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  text-align: center;
+}
+.health-ring-center strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.health-ring-center span { color: var(--muted); font-size: 11px; }
+.health-hint { margin-bottom: 8px; }
+.health-legend { list-style: none; display: grid; gap: 4px; }
+.health-legend button {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  text-align: left;
+  transition: background .15s ease, border-color .15s ease;
+}
+.health-legend button:hover, .health-legend button[aria-pressed="true"] { background: var(--brand-light); border-color: var(--brand); }
 .health-legend strong { color: var(--text); font-variant-numeric: tabular-nums; }
 .health-dot { width: 8px; height: 8px; border-radius: 50%; }
 .health-good { background: #168269; }
@@ -463,6 +514,7 @@ a { color: var(--brand); text-decoration: none; }
 .dashboard-alerts .table-empty strong { display: block; margin: 6px 0; color: var(--text); }
 .dashboard-alerts .table-empty p { line-height: 1.5; }
 .dashboard-alerts .empty-icon { color: var(--brand); }
+.dashboard-table-summary { padding: 9px 20px; color: var(--muted); font-size: 11px; }
 .item-search-header .topbar-search { width: min(100%, 380px); }
 
 /* ── Cards ───────────────────────────────────────────────── */
@@ -902,6 +954,7 @@ button[data-del]:hover { background: var(--danger-light); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
+  .reorder-art { animation: none; }
 }
 
 /* ── Scrollbar Styling ───────────────────────────────────── */

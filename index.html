@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="./css/style.css?v=f27fe46" />
+  <link rel="stylesheet" href="./css/style.css?v=cbfec6c6c8" />
 </head>
 <body>
 
@@ -213,17 +213,15 @@
             <div class="section-card-header"><h2 class="section-card-title" id="healthHeading">Stock health</h2></div>
             <div class="health-body">
               <p id="healthSummary">Import inventory to see stock health.</p>
-              <div class="health-track" aria-hidden="true">
-                <span class="health-good" data-health-segment="OK"></span>
-                <span class="health-low" data-health-segment="LOW STOCK"></span>
-                <span class="health-out" data-health-segment="STOCKOUT"></span>
-                <span class="health-review" data-health-segment="REVIEW"></span>
+              <div class="health-ring" id="healthRing" aria-hidden="true">
+                <div class="health-ring-center"><strong id="healthTotal">0</strong><span>Items</span></div>
               </div>
-              <ul class="health-legend">
-                <li><span class="health-dot health-good"></span><span>Available</span><strong data-health-count="OK">0</strong></li>
-                <li><span class="health-dot health-low"></span><span>Low stock</span><strong data-health-count="LOW STOCK">0</strong></li>
-                <li><span class="health-dot health-out"></span><span>Stockout</span><strong data-health-count="STOCKOUT">0</strong></li>
-                <li><span class="health-dot health-review"></span><span>Review</span><strong data-health-count="REVIEW">0</strong></li>
+              <p class="health-hint">Select a status to filter the table.</p>
+              <ul class="health-legend" aria-label="Filter dashboard items by stock status">
+                <li><button type="button" data-health-filter="OK" aria-pressed="false" aria-controls="dashboardAlertsTable"><span class="health-dot health-good"></span><span>Available</span><strong data-health-count="OK">0</strong></button></li>
+                <li><button type="button" data-health-filter="LOW STOCK" aria-pressed="false" aria-controls="dashboardAlertsTable"><span class="health-dot health-low"></span><span>Low stock</span><strong data-health-count="LOW STOCK">0</strong></button></li>
+                <li><button type="button" data-health-filter="STOCKOUT" aria-pressed="false" aria-controls="dashboardAlertsTable"><span class="health-dot health-out"></span><span>Stockout</span><strong data-health-count="STOCKOUT">0</strong></button></li>
+                <li><button type="button" data-health-filter="REVIEW" aria-pressed="false" aria-controls="dashboardAlertsTable"><span class="health-dot health-review"></span><span>Review</span><strong data-health-count="REVIEW">0</strong></button></li>
               </ul>
             </div>
           </section>
@@ -231,10 +229,14 @@
             <div class="section-card-header">
               <h2 class="section-card-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                Items to review
+                <span id="dashboardTableTitle">Items to review</span>
               </h2>
-              <button class="btn-ghost" id="goToAlertsBtn">View All Alerts →</button>
+              <div class="btn-group">
+                <button class="btn-ghost" id="clearHealthFilter" hidden>Clear filter</button>
+                <button class="btn-ghost" id="goToAlertsBtn">View All Alerts →</button>
+              </div>
             </div>
+            <p class="dashboard-table-summary" id="dashboardTableSummary" role="status"></p>
             <div class="table-wrap">
               <table id="dashboardAlertsTable">
                 <thead>
@@ -558,6 +560,6 @@
   </button>
 </nav>
 
-<script src="./js/app.js?v=d3f7726"></script>
+<script src="./js/app.js?v=1a2ff03f99"></script>
 </body>
 </html>

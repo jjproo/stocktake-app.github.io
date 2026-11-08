@@ -360,24 +360,45 @@ function renderPreviewTable() {
   }, 'preview');
 }
 
+const healthLabels = { OK: 'Available', 'LOW STOCK': 'Low stock', STOCKOUT: 'Stockout', REVIEW: 'Review' };
+const dashboardItemLimit = 10;
+let dashboardHealthFilter = '';
+
+function setDashboardHealthFilter(status) {
+  dashboardHealthFilter = status;
+  document.querySelectorAll('[data-health-filter]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.healthFilter === status));
+  });
+  $('clearHealthFilter').hidden = !status;
+  renderDashboardAlertsTable();
+}
+
 function renderDashboardAlertsTable() {
   const tbody = tableBodies.dashboardAlerts();
   if (!tbody) return;
   const order = { 'STOCKOUT': 0, 'LOW STOCK': 1, 'REVIEW': 2 };
-  const items = alertItems().slice().sort((a, b) => order[getStatus(a)] - order[getStatus(b)]);
+  const items = dashboardHealthFilter
+    ? inventoryData.filter(item => getStatus(item) === dashboardHealthFilter)
+    : alertItems().sort((a, b) => order[getStatus(a)] - order[getStatus(b)]);
+  const label = healthLabels[dashboardHealthFilter];
+  $('dashboardTableTitle').textContent = label ? `${label} items` : 'Items to review';
+  $('dashboardTableSummary').textContent = items.length
+    ? `Showing ${formatNumber(Math.min(items.length, dashboardItemLimit))} of ${formatNumber(items.length)} items`
+    : '0 matching items';
   createLimitedRows(tbody, items, it => {
     const s = getStatus(it);
     const tr = document.createElement('tr');
     tr.className = rowClass(s);
     tr.innerHTML = `<td class="mono">${escapeHtml(it.StockCode)}</td><td>${escapeHtml(it.Description)}</td><td class="right mono">${it.QtyOnHand ?? 0}</td><td class="right mono">${it.MinLevel ?? ''}</td><td class="hide-mobile">${escapeHtml(it.Department || '')}</td><td>${statusBadge(s)}</td>`;
     return tr;
-  }, 10);
+  }, dashboardItemLimit);
 
   const emptyEl = $('dashboardEmpty');
   if (emptyEl) emptyEl.style.display = items.length === 0 ? 'block' : 'none';
-  $('dashboardEmptyTitle').textContent = inventoryData.length ? 'No local stock alerts' : 'No inventory imported';
+  $('dashboardEmptyTitle').textContent = !inventoryData.length ? 'No inventory imported'
+    : label ? `No items with status ${label}` : 'No local stock alerts';
   $('dashboardEmptyMessage').textContent = inventoryData.length
-    ? 'No imported items meet your alert rules.'
+    ? (label ? 'Choose another status to see more items.' : 'No imported items meet your alert rules.')
     : 'Import an Excel workbook to see local stock alerts.';
 }
 
@@ -458,9 +479,13 @@ function updateDashboard() {
   document.querySelectorAll('[data-health-count]').forEach(label => {
     label.textContent = formatNumber(counts[label.dataset.healthCount]);
   });
-  document.querySelectorAll('[data-health-segment]').forEach(segment => {
-    segment.style.flexGrow = counts[segment.dataset.healthSegment];
-  });
+  $('healthTotal').textContent = formatNumber(total);
+  const ring = $('healthRing');
+  const percentage = count => `${total ? (count / total) * 100 : 0}%`;
+  ring.style.setProperty('--available-end', percentage(counts.OK));
+  ring.style.setProperty('--low-end', percentage(counts.OK + counts['LOW STOCK']));
+  ring.style.setProperty('--out-end', percentage(total - counts.REVIEW));
+  ring.classList.toggle('has-inventory', total > 0);
   $('inventoryValue').innerText = formatNumber(inventoryData.reduce((s, it) =>
     s + (it.TotalValue || ((it.UnitCost || 0) * (it.QtyOnHand || 0))), 0));
   $('stockoutValue').innerText = formatNumber(inventoryData
@@ -612,6 +637,18 @@ document.addEventListener('input', e => {
 // Navigation
 document.querySelectorAll('[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+});
+
+document.querySelectorAll('[data-health-filter]').forEach(button => {
+  button.addEventListener('click', () => {
+    const status = button.dataset.healthFilter;
+    setDashboardHealthFilter(dashboardHealthFilter === status ? '' : status);
+  });
+});
+$('clearHealthFilter').addEventListener('click', () => {
+  const activeButton = document.querySelector('[data-health-filter][aria-pressed="true"]');
+  setDashboardHealthFilter('');
+  activeButton?.focus();
 });
 
 $('inventorySearchForm').addEventListener('submit', event => {
