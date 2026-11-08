@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="./css/style.css?v=85c8de92e4" />
+  <link rel="stylesheet" href="./css/style.css?v=abf24629ac" />
 </head>
 <body>
 
@@ -134,8 +134,14 @@
               Export to Excel
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
-            <button type="button" class="reorder-report-link priority-shortcut" data-tab="priorities">Buy Priorities <span id="openPriorityCount">(0)</span></button>
-            <a class="reorder-report-link" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="Open Power BI report (opens in a new tab)">Open Power BI report <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+          </div>
+          <div class="priority-tile">
+            <button type="button" class="priority-tile-open" data-tab="priorities">
+              <span class="priority-tile-title">Buy Priorities <span aria-hidden="true">→</span></span>
+              <strong id="openPriorityCount">0</strong>
+              <span class="priority-tile-caption">Open reminders</span>
+            </button>
+            <button type="button" class="priority-tile-export" id="exportPrioritiesBtn">Export priorities</button>
           </div>
         </section>
 
@@ -373,7 +379,6 @@
             <p class="page-sub">Items requiring immediate attention</p>
           </div>
           <div class="btn-group">
-            <a class="btn-ghost" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="Open Power BI report (opens in a new tab)">Open Power BI report</a>
             <button class="btn-primary" id="exportAlertsBtn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export to Excel
@@ -617,6 +622,6 @@
   </button>
 </nav>
 
-<script src="./js/app.js?v=63c8f4a885"></script>
+<script src="./js/app.js?v=d703961d4c"></script>
 </body>
 </html>

@@ -401,6 +401,10 @@ a { color: var(--brand); text-decoration: none; }
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   border-radius: 16px;
   margin-bottom: 26px;
   padding: 24px 28px;
@@ -444,19 +448,36 @@ a { color: var(--brand); text-decoration: none; }
 }
 .reorder-link:hover { background: #c6f8e6; }
 .reorder-link:focus-visible { outline-color: white; }
-.reorder-report-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.priority-tile {
+  flex: 0 0 174px;
+  border: 1px solid #6aa194;
+  border-radius: 12px;
+  background: #153a38;
+  color: #e9faf3;
+}
+.priority-tile button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  transition: background .18s ease;
+}
+.priority-tile button:hover { background: #21514c; }
+.priority-tile button:focus-visible { outline-color: white; outline-offset: -3px; }
+.priority-tile-open { display: grid; gap: 4px; padding: 12px 15px; border-radius: 11px 11px 0 0; }
+.priority-tile .priority-tile-export {
   min-height: 40px;
-  margin: 8px 0 0 12px;
-  color: #d0e3e0;
+  padding: 8px 15px;
+  border-top: 1px solid #6aa194;
+  border-radius: 0 0 11px 11px;
+  color: var(--mint);
   font-size: 12px;
   font-weight: 700;
 }
-.reorder-report-link:hover { color: #fff; text-decoration: underline; }
-.reorder-report-link:focus-visible { outline-color: white; }
-.priority-shortcut { background: transparent; border: 0; }
+.priority-tile-title { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 800; }
+.priority-tile strong { color: var(--mint); font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.priority-tile-caption { font-size: 11px; color: #c4e0d9; }
 .priority-feedback { display: inline-block; padding: 0 20px 16px; color: var(--text-2); }
 #buyPriorityTable td { overflow-wrap: anywhere; }
 #buyPriorityTable td:nth-child(4) { min-width: 160px; max-width: 320px; }
@@ -962,7 +983,8 @@ button[data-del]:hover { background: var(--danger-light); }
   .kpi-value-sm { font-size: 15px; }
   .topbar { gap: 8px; }
   .topbar-right { display: none; }
-  .reorder-banner { padding: 20px; }
+  .reorder-banner { padding: 20px; align-items: stretch; flex-direction: column; }
+  .priority-tile { flex-basis: auto; }
   .reorder-art { display: none; }
   .section-card-header { padding-inline: 14px; }
   .mob-nav-btn { min-width: 0; padding-inline: 7px; }

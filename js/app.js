@@ -613,7 +613,7 @@ function updatePriorityCount() {
   const count = [...buyPriorities.values()].filter(priority => !priority.done).length;
   $('prioritiesBadge').textContent = formatNumber(count);
   $('prioritiesBadge').hidden = count === 0;
-  $('openPriorityCount').textContent = `(${formatNumber(count)})`;
+  $('openPriorityCount').textContent = formatNumber(count);
 }
 
 function renderBuyPriorities() {
@@ -648,6 +648,30 @@ function saveBuyPriority(priority) {
   });
 }
 
+function buildBuyPrioritySheet() {
+  const rows = sortedBuyPriorities().filter(priority => !priority.done).flatMap(priority => {
+    const items = matchingPriorityItems(priority);
+    return (items.length ? items : [null]).map(item => ({
+      Priority: priority.level,
+      'Look up by': priority.type === 'bin' ? 'Bin location' : 'Material code',
+      Reference: priority.reference,
+      SAP_Material: item?.StockCode ?? '',
+      Material_Description: item?.Description ?? '',
+      Bin_location: item?.DefaultBin ?? '',
+      Stock_on_hand: item?.QtyOnHand ?? '',
+      'Follow-up note': priority.note,
+      'Inventory match': item ? 'Matched' : 'No match'
+    }));
+  });
+  return { name: 'Buy Priorities', rows, columnWidths: [12, 18, 18, 16, 42, 18, 17, 42, 18] };
+}
+
+function exportBuyPrioritiesExcel() {
+  const { name, rows, columnWidths } = buildBuyPrioritySheet();
+  if (!rows.length) return alert('No open buy priorities to export.');
+  downloadExcel(rows, name, 'Buy_Priorities.xlsx', { columnWidths, autoFilter: true });
+}
+
 function exportAlertsExcel() {
   const rows = alertItems().map(it => ({
     SAP_Material: it.StockCode,
@@ -662,28 +686,14 @@ function exportAlertsExcel() {
     slot: '',
     Status: getStatus(it)
   }));
-  const priorityRows = sortedBuyPriorities().filter(priority => !priority.done).flatMap(priority => {
-    const items = matchingPriorityItems(priority);
-    return (items.length ? items : [null]).map(item => ({
-      Priority: priority.level,
-      'Look up by': priority.type === 'bin' ? 'Bin location' : 'Material code',
-      Reference: priority.reference,
-      SAP_Material: item?.StockCode ?? '',
-      Material_Description: item?.Description ?? '',
-      Bin_location: item?.DefaultBin ?? '',
-      Stock_on_hand: item?.QtyOnHand ?? '',
-      'Follow-up note': priority.note,
-      'Inventory match': item ? 'Matched' : 'No match'
-    }));
-  });
-  if (rows.length === 0 && priorityRows.length === 0) return alert('No stock alerts or open buy priorities found.');
+  const prioritySheet = buildBuyPrioritySheet();
+  if (rows.length === 0 && prioritySheet.rows.length === 0) return alert('No stock alerts or open buy priorities found.');
   const filename = 'Stock_Alerts_Report.xlsx';
-  const prioritySheet = { name: 'Buy Priorities', rows: priorityRows, columnWidths: [12, 18, 18, 16, 42, 18, 17, 42, 18] };
-  if (!rows.length) return downloadExcel(priorityRows, prioritySheet.name, filename, { columnWidths: prioritySheet.columnWidths, autoFilter: true });
+  if (!rows.length) return downloadExcel(prioritySheet.rows, prioritySheet.name, filename, { columnWidths: prioritySheet.columnWidths, autoFilter: true });
   downloadExcel(rows, 'StockAlerts', filename, {
     columnWidths: [16, 42, 18, 18, 24, 17, 16, 16, 20, 14, 15],
     autoFilter: true,
-    extraSheet: priorityRows.length ? prioritySheet : undefined
+    extraSheet: prioritySheet.rows.length ? prioritySheet : undefined
   });
 }
 
@@ -889,6 +899,7 @@ $('exportInventoryBtn')?.addEventListener('click', () => {
 
 $('exportAlertsBtn')?.addEventListener('click', exportAlertsExcel);
 $('exportReorderTriggersBtn')?.addEventListener('click', exportAlertsExcel);
+$('exportPrioritiesBtn').addEventListener('click', exportBuyPrioritiesExcel);
 $('goToAlertsBtn')?.addEventListener('click', () => setActiveTab('alerts'));
 
 $('itemsTable').addEventListener('click', event => {
