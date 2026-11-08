@@ -98,20 +98,20 @@ function rowClass(s) {
 }
 
 function normalizeItem(raw) {
-  const stock = raw.StockCode ?? raw['Stock Code'] ?? raw['SAP Material'];
+  const stock = raw.StockCode ?? raw['Stock Code'] ?? raw['SAP Material'] ?? raw.Material;
   const desc = raw.Description ?? raw['Material Description'] ?? raw['Item Description'];
   if (!stock || !desc) return null;
   return {
     StockCode:    cleanText(stock),
     Description:  cleanText(desc),
-    AlternateKey: cleanText(raw.AlternateKey ?? raw['old stkcode']),
-    QtyOnHand:    toNumberOrNull(raw.QtyOnHand ?? raw['Stock on hand '] ?? raw['Stock on hand'] ?? raw['Qty']) ?? 0,
-    DefaultBin:   cleanText(raw.DefaultBin ?? raw['Bin location'] ?? raw['Default Bin'] ?? raw['Bin']),
-    MinLevel:     toNumberOrNull(raw.MinLevel ?? raw['minimum QTY'] ?? raw['Min']),
-    MaxLevel:     toNumberOrNull(raw.MaxLevel ?? raw['maximum QTY'] ?? raw['Max']),
-    UnitCost:     toNumberOrNull(raw.UnitCost ?? raw['Unit cost '] ?? raw['Unit cost']),
-    TotalValue:   toNumberOrNull(raw.TotalValue ?? raw['Total value']),
-    Department:   cleanText(raw.Department ?? raw['Department ']),
+    AlternateKey: cleanText(raw.AlternateKey ?? raw['old stkcode'] ?? raw['old stk code']),
+    QtyOnHand:    toNumberOrNull(raw.QtyOnHand ?? raw['Stock on hand '] ?? raw['Stock on hand'] ?? raw.Qty ?? raw['Plant stock']) ?? 0,
+    DefaultBin:   cleanText(raw.DefaultBin ?? raw['Bin location'] ?? raw['Default Bin'] ?? raw.Bin ?? raw.BIN),
+    MinLevel:     toNumberOrNull(raw.MinLevel ?? raw['minimum QTY'] ?? raw.Min ?? raw.min),
+    MaxLevel:     toNumberOrNull(raw.MaxLevel ?? raw['maximum QTY'] ?? raw.Max ?? raw.max),
+    UnitCost:     toNumberOrNull(raw.UnitCost ?? raw['Unit cost '] ?? raw['Unit cost'] ?? raw['unit Price']),
+    TotalValue:   toNumberOrNull(raw.TotalValue ?? raw['Total value'] ?? raw['Value Unrestricted']),
+    Department:   cleanText(raw.Department ?? raw['Department '] ?? raw.department),
     Machine:      cleanText(raw.Machine ?? raw['Machine ']),
     Currency:     cleanText(raw.Currency)
   };
@@ -682,6 +682,22 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 });
 
 // Upload
+function readInventorySheet(workbook) {
+  const mr01 = workbook.SheetNames.find(name => name.trim().toUpperCase() === 'MR01');
+  const data = workbook.SheetNames.find(name => name.trim().toUpperCase() === 'DATA');
+  const readRows = name => XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' });
+
+  if (!mr01 && data && data !== workbook.SheetNames[0]) {
+    const rows = readRows(data);
+    const first = rows[0];
+    if (first && Object.hasOwn(first, 'Material') && Object.hasOwn(first, 'Plant stock') &&
+        Object.hasOwn(first, 'Material Description')) return { name: data, rows };
+  }
+
+  const name = mr01 || workbook.SheetNames[0];
+  return { name, rows: readRows(name) };
+}
+
 function importInventoryFile(file) {
   if (!file) return;
   if (typeof XLSX === 'undefined') {
@@ -693,10 +709,8 @@ function importInventoryFile(file) {
     try {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      const preferredSheet = workbook.SheetNames.find(n => n.trim().toUpperCase() === 'MR01') || workbook.SheetNames[0];
-      const sheet = workbook.Sheets[preferredSheet];
-      const raw = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      const normalized = raw.map(normalizeItem).filter(Boolean);
+      const { name, rows } = readInventorySheet(workbook);
+      const normalized = rows.map(normalizeItem).filter(Boolean);
       if (!normalized.length) {
         alert('No inventory items found. Check that the sheet has a SAP code column and at least one item.');
         return;
@@ -708,7 +722,7 @@ function importInventoryFile(file) {
       saveInventory();
       saveStocktake();
       renderVisibleTab();
-      alert(`Imported ${normalized.length} items from sheet: ${preferredSheet}`);
+      alert(`Imported ${normalized.length} items from sheet: ${name}`);
     } catch (err) {
       console.error(err);
       alert('Import failed. Check your SAP export format.');
