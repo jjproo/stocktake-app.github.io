@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>InvDash — Inventory Management</title>
   <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#10b981" />
+  <meta name="theme-color" content="#101e27" />
+  <meta name="description" content="InvDash spare parts inventory and stocktake workspace." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -25,10 +26,10 @@
           <rect x="2" y="14" width="7" height="7" rx="1.5"/><rect x="15" y="14" width="7" height="7" rx="1.5"/>
         </svg>
       </div>
-      <span class="brand-name">InvDash</span>
+      <div><span class="brand-name">InvDash</span><span class="brand-caption">Inventory operations</span></div>
     </div>
 
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Main navigation">
       <div class="nav-section-label">Main</div>
       <button class="nav-item" data-tab="dashboard">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -64,10 +65,10 @@
         Install App
       </button>
       <div class="sidebar-user">
-        <div class="avatar">AD</div>
+        <div class="avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5"/></svg></div>
         <div>
-          <div class="user-name">Admin</div>
-          <div class="user-role">Inventory Manager</div>
+          <div class="user-name">Inventory workspace</div>
+          <div class="user-role">Data stored on this device</div>
         </div>
       </div>
     </div>
@@ -78,35 +79,60 @@
 
     <!-- TOPBAR -->
     <header class="topbar">
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div class="topbar-search">
+      <form id="inventorySearchForm" class="topbar-search" role="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="globalSearch" placeholder="Search inventory…" autocomplete="off" />
-      </div>
+        <input type="search" id="globalSearch" aria-label="Search inventory" placeholder="SAP code or description" autocomplete="off" />
+        <button class="search-submit" type="submit" aria-label="Search inventory">↵</button>
+      </form>
       <div class="topbar-right">
-        <div class="topbar-pill online-pill" id="onlinePill">● Online</div>
+        <div class="topbar-pill online-pill" id="onlinePill">● Local workspace</div>
         <div class="topbar-time" id="topbarTime"></div>
       </div>
     </header>
 
     <!-- PAGE CONTENT -->
-    <div class="content-wrap">
+    <main class="content-wrap" id="mainContent">
 
       <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
       <section id="dashboard" class="tab-section">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Dashboard</h1>
-            <p class="page-sub">Real-time inventory overview</p>
+            <div class="eyebrow">Inventory operations</div>
+            <h1 class="page-title">Inventory overview</h1>
+            <p class="page-sub">Monitor spare parts, track stock counts, and spot items that need attention.</p>
           </div>
           <button class="btn-primary" onclick="setActiveTab('upload')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Import Data
+            Import inventory
           </button>
         </div>
 
+        <section class="reorder-banner" aria-labelledby="reorderHeading">
+          <svg class="reorder-art" viewBox="0 0 360 170" fill="none" aria-hidden="true">
+            <defs><pattern id="inventoryGrid" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M22 0H0V22" stroke="#91d9c2" stroke-opacity=".22"/></pattern></defs>
+            <path fill="url(#inventoryGrid)" d="M0 0h360v170H0z"/>
+            <g stroke="#9ee8ce" stroke-width="1.2" stroke-linejoin="round">
+              <path fill="#244c49" d="m220 31 54 27v53l-54 27-54-27V58z"/><path d="m166 58 54 27 54-27m-54 27v53m-27-94 54 27v20"/>
+              <path fill="#285a52" d="m283 74 44 22v42l-44 22-44-22V96z"/><path d="m239 96 44 22 44-22m-44 22v42m-22-75 44 22v16"/>
+              <path fill="#32695e" d="m140 80 36 18v35l-36 18-36-18V98z"/><path d="m104 98 36 18 36-18m-36 18v35"/>
+              <path stroke-dasharray="4 5" opacity=".55" d="M85 59h59m-8-20h41m112 10h36m-12-17h33M71 129h18"/>
+            </g>
+          </svg>
+          <div class="reorder-content">
+            <span class="reorder-source">SAP ERP / POWER BI</span>
+            <h2 id="reorderHeading">Reorder triggers</h2>
+            <p>Open the bookmarked report to review spare parts flagged for replenishment.</p>
+            <a class="reorder-link" href="https://app.powerbi.com/groups/me/apps/77364dda-aa46-4335-b527-a5bc26147724/reports/ff1308c7-5fc6-494d-a867-172d9b74f196/ReportSection600ba6542e9af35c8f32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&amp;experience=power-bi&amp;bookmarkGuid=Bookmarka8eccc189692259430fa" target="_blank" rel="noopener noreferrer" aria-label="View reorder triggers (opens in a new tab)">View reorder triggers <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+          </div>
+        </section>
+
+        <div class="dashboard-section-heading">
+          <h2>Inventory snapshot</h2>
+          <span>Based on data on this device</span>
+        </div>
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon kpi-icon-blue">
@@ -116,7 +142,6 @@
               <div class="kpi-label">Total Items</div>
               <div class="kpi-value" id="totalItems">0</div>
             </div>
-            <div class="kpi-trend kpi-trend-up">+0%</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon kpi-icon-green">
@@ -126,9 +151,8 @@
               <div class="kpi-label">Total Qty on Hand</div>
               <div class="kpi-value" id="totalQty">0</div>
             </div>
-            <div class="kpi-trend kpi-trend-up">Active</div>
           </div>
-          <div class="kpi-card kpi-card-danger">
+          <div class="kpi-card">
             <div class="kpi-icon kpi-icon-red">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
@@ -136,9 +160,8 @@
               <div class="kpi-label">Stockouts</div>
               <div class="kpi-value" id="stockoutCount">0</div>
             </div>
-            <div class="kpi-trend kpi-trend-down">Critical</div>
           </div>
-          <div class="kpi-card kpi-card-warning">
+          <div class="kpi-card">
             <div class="kpi-icon kpi-icon-orange">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
@@ -146,7 +169,6 @@
               <div class="kpi-label">Low Stock</div>
               <div class="kpi-value" id="lowStockCount">0</div>
             </div>
-            <div class="kpi-trend kpi-trend-down">Watch</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon kpi-icon-purple">
@@ -156,7 +178,6 @@
               <div class="kpi-label">Inventory Value (UGX)</div>
               <div class="kpi-value kpi-value-sm" id="inventoryValue">0</div>
             </div>
-            <div class="kpi-trend">Total</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon kpi-icon-teal">
@@ -166,7 +187,6 @@
               <div class="kpi-label">Stocktake Lines</div>
               <div class="kpi-value" id="countedLines">0</div>
             </div>
-            <div class="kpi-trend">Counted</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon kpi-icon-pink">
@@ -176,9 +196,8 @@
               <div class="kpi-label">Variance Lines</div>
               <div class="kpi-value" id="varianceLines">0</div>
             </div>
-            <div class="kpi-trend">Δ Count</div>
           </div>
-          <div class="kpi-card kpi-card-danger">
+          <div class="kpi-card">
             <div class="kpi-icon kpi-icon-red">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
@@ -186,36 +205,56 @@
               <div class="kpi-label">Stockout Value (UGX)</div>
               <div class="kpi-value kpi-value-sm" id="stockoutValue">0</div>
             </div>
-            <div class="kpi-trend kpi-trend-down">At Risk</div>
           </div>
         </div>
 
-        <div class="section-card">
-          <div class="section-card-header">
-            <h3 class="section-card-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-              Critical Alerts
-            </h3>
-            <button class="btn-ghost" id="goToAlertsBtn">View All Alerts →</button>
-          </div>
-          <div class="table-wrap">
-            <table id="dashboardAlertsTable">
-              <thead>
-                <tr>
-                  <th>SAP Code</th>
-                  <th>Description</th>
-                  <th class="right">Qty</th>
-                  <th class="right">Min</th>
-                  <th class="hide-mobile">Department</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div class="table-empty" id="dashboardEmpty" style="display:none">
-            <div class="empty-icon">✓</div>
-            <div>No critical alerts — inventory looks healthy!</div>
+        <div class="dashboard-detail">
+          <section class="section-card stock-health" aria-labelledby="healthHeading">
+            <div class="section-card-header"><h2 class="section-card-title" id="healthHeading">Stock health</h2></div>
+            <div class="health-body">
+              <p id="healthSummary">Import inventory to see stock health.</p>
+              <div class="health-track" aria-hidden="true">
+                <span class="health-good" data-health-segment="OK"></span>
+                <span class="health-low" data-health-segment="LOW STOCK"></span>
+                <span class="health-out" data-health-segment="STOCKOUT"></span>
+                <span class="health-review" data-health-segment="REVIEW"></span>
+              </div>
+              <ul class="health-legend">
+                <li><span class="health-dot health-good"></span><span>Available</span><strong data-health-count="OK">0</strong></li>
+                <li><span class="health-dot health-low"></span><span>Low stock</span><strong data-health-count="LOW STOCK">0</strong></li>
+                <li><span class="health-dot health-out"></span><span>Stockout</span><strong data-health-count="STOCKOUT">0</strong></li>
+                <li><span class="health-dot health-review"></span><span>Review</span><strong data-health-count="REVIEW">0</strong></li>
+              </ul>
+            </div>
+          </section>
+          <div class="section-card dashboard-alerts">
+            <div class="section-card-header">
+              <h2 class="section-card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                Items to review
+              </h2>
+              <button class="btn-ghost" id="goToAlertsBtn">View All Alerts →</button>
+            </div>
+            <div class="table-wrap">
+              <table id="dashboardAlertsTable">
+                <thead>
+                  <tr>
+                    <th>SAP Code</th>
+                    <th>Description</th>
+                    <th class="right">Qty</th>
+                    <th class="right">Min</th>
+                    <th class="hide-mobile">Department</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="table-empty" id="dashboardEmpty" style="display:none">
+              <div class="empty-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5"/></svg></div>
+              <strong id="dashboardEmptyTitle">No inventory imported</strong>
+              <p id="dashboardEmptyMessage">Import an Excel workbook to see local stock alerts.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -339,7 +378,7 @@
             </div>
             <div class="topbar-search topbar-search-sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="alertSearch" placeholder="Search alerts…" />
+              <input type="text" id="alertSearch" aria-label="Search stock alerts" placeholder="Search alerts…" />
             </div>
             <input type="hidden" id="alertFilter" value="" />
           </div>
@@ -375,6 +414,12 @@
           </button>
         </div>
         <div class="section-card">
+          <div class="section-card-header item-search-header">
+            <label class="topbar-search topbar-search-sm">
+              <input type="search" id="itemsSearch" aria-label="Filter inventory items" placeholder="Filter by SAP code, description or bin" />
+            </label>
+          </div>
+          <p class="table-empty" id="itemsEmpty" hidden></p>
           <div class="table-wrap">
             <table id="itemsTable">
               <thead>
@@ -413,7 +458,7 @@
           <div class="section-card-header">
             <div class="topbar-search topbar-search-sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="stocktakeFilter" placeholder="Search items…" />
+              <input type="text" id="stocktakeFilter" aria-label="Search stocktake items" placeholder="Search items…" />
             </div>
             <button class="btn-ghost btn-ghost-danger" id="markAllUncountedBtn">Reset Count</button>
           </div>
@@ -485,12 +530,12 @@
         </div>
       </section>
 
-    </div><!-- end content-wrap -->
+    </main><!-- end content-wrap -->
   </div><!-- end main-area -->
 </div><!-- end shell -->
 
 <!-- MOBILE NAV -->
-<nav class="mobile-nav">
+<nav class="mobile-nav" aria-label="Mobile navigation">
   <button class="mob-nav-btn" data-tab="dashboard">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
     <span>Home</span>

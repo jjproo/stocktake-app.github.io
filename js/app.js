@@ -188,13 +188,13 @@ function loadAll() {
 function setActiveTab(tab) {
   activeTab = tab;
 
-  // Sidebar nav items
-  document.querySelectorAll('.nav-item[data-tab]').forEach(b =>
-    b.classList.toggle('active', b.dataset.tab === tab));
-
-  // Mobile nav items
-  document.querySelectorAll('.mob-nav-btn[data-tab]').forEach(b =>
-    b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.nav-item[data-tab], .mob-nav-btn[data-tab]').forEach(button => {
+    const active = button.dataset.tab === tab;
+    button.classList.toggle('active', active);
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+  $('mainContent').scrollTop = 0;
 
   // Sections
   document.querySelectorAll('.tab-section').forEach(sec => {
@@ -216,12 +216,16 @@ function renderVisibleTab() {
 
 /* ── Mobile Sidebar ─────────────────────────────────────── */
 function openSidebar() {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebarOverlay').classList.add('show');
+  $('sidebar').classList.add('open');
+  $('sidebarOverlay').classList.add('show');
+  $('menuToggle').setAttribute('aria-expanded', 'true');
+  document.querySelector('.sidebar-nav .active')?.focus();
 }
 function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('show');
+  if ($('sidebar').classList.contains('open')) $('menuToggle').focus();
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+  $('menuToggle').setAttribute('aria-expanded', 'false');
 }
 
 /* ── Debounce ───────────────────────────────────────────── */
@@ -237,6 +241,7 @@ function matchesQuery(it, q) {
     (it.StockCode    || '').toLowerCase().includes(q) ||
     (it.Description  || '').toLowerCase().includes(q) ||
     (it.AlternateKey || '').toLowerCase().includes(q) ||
+    (it.DefaultBin   || '').toLowerCase().includes(q) ||
     (it.Department   || '').toLowerCase().includes(q) ||
     (it.Machine      || '').toLowerCase().includes(q)
   );
@@ -370,6 +375,10 @@ function renderDashboardAlertsTable() {
 
   const emptyEl = $('dashboardEmpty');
   if (emptyEl) emptyEl.style.display = items.length === 0 ? 'block' : 'none';
+  $('dashboardEmptyTitle').textContent = inventoryData.length ? 'No local stock alerts' : 'No inventory imported';
+  $('dashboardEmptyMessage').textContent = inventoryData.length
+    ? 'No imported items meet your alert rules.'
+    : 'Import an Excel workbook to see local stock alerts.';
 }
 
 function renderAlertsTable() {
@@ -401,8 +410,12 @@ function renderAlertsTable() {
 function renderItemsTable() {
   const tbody = tableBodies.items();
   if (!tbody) return;
-  const items = [...inventoryData]
+  const query = $('itemsSearch').value.trim().toLowerCase();
+  const items = inventoryData.filter(item => matchesQuery(item, query))
     .sort((a, b) => String(a.StockCode).localeCompare(String(b.StockCode)));
+  const empty = $('itemsEmpty');
+  empty.hidden = items.length > 0;
+  empty.textContent = query ? 'No items match your search.' : 'Import inventory to see items here.';
   createRows(tbody, items, it => {
     const s = getStatus(it);
     const tr = document.createElement('tr');
@@ -434,8 +447,20 @@ function renderStocktakeTable() {
 function updateDashboard() {
   $('totalItems').innerText    = formatNumber(inventoryData.length);
   $('totalQty').innerText      = formatNumber(inventoryData.reduce((s, it) => s + (it.QtyOnHand || 0), 0));
-  $('stockoutCount').innerText = formatNumber(inventoryData.filter(it => getStatus(it) === 'STOCKOUT').length);
-  $('lowStockCount').innerText = formatNumber(inventoryData.filter(it => getStatus(it) === 'LOW STOCK').length);
+  const counts = { OK: 0, 'LOW STOCK': 0, STOCKOUT: 0, REVIEW: 0 };
+  for (const item of inventoryData) counts[getStatus(item)]++;
+  $('stockoutCount').innerText = formatNumber(counts.STOCKOUT);
+  $('lowStockCount').innerText = formatNumber(counts['LOW STOCK']);
+  const total = inventoryData.length;
+  $('healthSummary').textContent = total
+    ? `${formatNumber(total - counts.OK)} of ${formatNumber(total)} items need attention.`
+    : 'Import inventory to see stock health.';
+  document.querySelectorAll('[data-health-count]').forEach(label => {
+    label.textContent = formatNumber(counts[label.dataset.healthCount]);
+  });
+  document.querySelectorAll('[data-health-segment]').forEach(segment => {
+    segment.style.flexGrow = counts[segment.dataset.healthSegment];
+  });
   $('inventoryValue').innerText = formatNumber(inventoryData.reduce((s, it) =>
     s + (it.TotalValue || ((it.UnitCost || 0) * (it.QtyOnHand || 0))), 0));
   $('stockoutValue').innerText = formatNumber(inventoryData
@@ -453,7 +478,7 @@ function updateDashboard() {
   );
 
   // Alert badge
-  const alertCount = inventoryData.filter(it => getStatus(it) !== 'OK').length;
+  const alertCount = total - counts.OK;
   const badge = $('alertsBadge');
   if (badge) {
     badge.textContent = alertCount;
@@ -589,9 +614,23 @@ document.querySelectorAll('[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
 });
 
+$('inventorySearchForm').addEventListener('submit', event => {
+  event.preventDefault();
+  $('itemsSearch').value = $('globalSearch').value;
+  resetPage('items');
+  setActiveTab('items');
+  $('itemsSearch').focus();
+});
+$('itemsSearch').addEventListener('input', debounce(() => {
+  resetPage('items');
+  renderItemsTable();
+}));
+
 // Mobile sidebar toggle
 document.getElementById('menuToggle')?.addEventListener('click', openSidebar);
-document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && $('sidebar').classList.contains('open')) closeSidebar();
+});
 
 // Filter chips on alerts page
 document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -606,8 +645,7 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 });
 
 // Upload
-$('excelUpload')?.addEventListener('change', event => {
-  const file = event.target.files[0];
+function importInventoryFile(file) {
   if (!file) return;
   if (typeof XLSX === 'undefined') {
     alert('Excel library not loaded. Please run through a local server.');
@@ -622,6 +660,10 @@ $('excelUpload')?.addEventListener('change', event => {
       const sheet = workbook.Sheets[preferredSheet];
       const raw = XLSX.utils.sheet_to_json(sheet, { defval: '' });
       const normalized = raw.map(normalizeItem).filter(Boolean);
+      if (!normalized.length) {
+        alert('No inventory items found. Check that the sheet has a SAP code column and at least one item.');
+        return;
+      }
       const existing = { ...stocktake };
       inventoryData = normalized;
       stocktake = {};
@@ -635,7 +677,13 @@ $('excelUpload')?.addEventListener('change', event => {
       alert('Import failed. Check your SAP export format.');
     }
   };
+  reader.onerror = () => alert('The workbook could not be read. Try selecting the file again.');
   reader.readAsArrayBuffer(file);
+}
+
+$('excelUpload').addEventListener('change', event => {
+  importInventoryFile(event.target.files[0]);
+  event.target.value = '';
 });
 
 // Drag & drop on upload zone
@@ -646,23 +694,27 @@ if (dropZone) {
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const fake = { target: { files: [file] } };
-      $('excelUpload').dispatchEvent(Object.assign(new Event('change'), { target: { files: [file] } }));
-    }
+    importInventoryFile(e.dataTransfer.files[0]);
   });
 }
 
 $('loadSampleBtn')?.addEventListener('click', async () => {
-  const res = await fetch('./sample-data.json');
-  const raw = await res.json();
-  inventoryData = raw.map(normalizeItem).filter(Boolean);
+  if ((inventoryData.length || Object.keys(stocktake).length) &&
+      !confirm('Replace the inventory and stocktake on this device with sample data?')) return;
+  try {
+    const response = await fetch('./sample-data.json');
+    if (!response.ok) throw new Error(`Sample request failed (${response.status})`);
+    const raw = await response.json();
+    inventoryData = raw.map(normalizeItem).filter(Boolean);
+  } catch (error) {
+    console.error(error);
+    alert('Sample data could not be loaded. Please try again.');
+    return;
+  }
   stocktake = {};
   saveInventory();
   saveStocktake();
   setActiveTab('dashboard');
-  alert('Sample data loaded. Viewing Dashboard.');
 });
 
 $('searchInput')?.addEventListener('input', debounce(() => { resetPage('preview'); renderPreviewTable(); }));
