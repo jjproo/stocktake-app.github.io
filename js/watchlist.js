@@ -81,8 +81,9 @@
         html += `<tr class="wl-group"><th colspan="12" scope="rowgroup">${esc(department)}</th></tr>`;
       }
       const date = row.shortage === null ? '—' : model.iso(row.shortage);
-      html += `<tr><td>${esc(row.bin || '—')}</td><td class="mono">${esc(row.material)}</td>
+      html += `<tr><td class="mono">${esc(row.material)}</td>
         <td>${esc(row.description)}<br><small>${esc(row.mrp || 'MRP unassigned')} · ${esc(row.unit || 'UoM unassigned')}</small></td>
+        <td>${esc(row.bin || '—')}</td>
         <td class="${row.priority === 0 || row.critical === 'Line stop' ? 'wl-risk' : ''}">${esc(row.critical)}</td>
         <td>${format(row.stock)}<br><small>${esc(row.stockSource)}</small></td><td>${format(row.net)}</td><td><strong>${format(row.reorder)}</strong><br><small>${esc(row.reorderBasis)}</small></td>
         <td class="${row.priority === 0 ? 'wl-risk' : ''}">${date}</td><td>${row.shortage === null ? '—' : format(row.shortQty)}</td>
@@ -222,8 +223,8 @@
       const raw = String(value ?? '');
       return '"' + (typeof value === 'string' && /^[=+@-]/.test(raw) ? "'" + raw : raw).replaceAll('"','""') + '"';
     };
-    const heading = ['Department','Bin','Material','Description','MRP','Criticality','Stock','Stock source','Net consumption','History days','Current reorder point','Suggested reorder point','Reorder basis','Lead days','Shortage date','First gap','Next receipt','Suggested qty','Status','Action'];
-    const data = filtered.map(r=>[r.department,r.bin,r.material,r.description,r.mrp,r.critical,r.stock,r.stockSource,r.net,historyDays,r.rop,r.reorder,r.reorderBasis,r.lead,
+    const heading = ['Material','Description','Bin location','Department','MRP','Criticality','Stock','Stock source','Net consumption','History days','Current reorder point','Suggested reorder point','Reorder basis','Lead days','Shortage date','First gap','Next receipt','Suggested qty','Status','Action'];
+    const data = filtered.map(r=>[r.material,r.description,r.bin,r.department,r.mrp,r.critical,r.stock,r.stockSource,r.net,historyDays,r.rop,r.reorder,r.reorderBasis,r.lead,
       model.iso(r.shortage),r.shortage === null ? '' : r.shortQty,model.iso(r.nextReceipt),r.replenishment,r.status,r.nextAction]);
     saveFile('InvDash stockout watchlist.csv',[heading,...data].map(row=>row.map(safe).join(',')).join('\r\n'),'text/csv;charset=utf-8');
   });
