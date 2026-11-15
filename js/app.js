@@ -228,6 +228,7 @@ function renderVisibleTab() {
   else if (activeTab === 'items')     renderItemsTable();
   else if (activeTab === 'stocktake') renderStocktakeTable();
   else if (activeTab === 'priorities') renderBuyPriorities();
+  else if (activeTab === 'watchlist') globalThis.renderStockoutWatchlist?.();
   updateDashboard();
 }
 

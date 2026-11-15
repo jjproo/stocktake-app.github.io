@@ -1,0 +1,14 @@
+.wl-body { padding: 16px 20px; }
+.wl-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.wl-controls label { display: grid; gap: 5px; font-size: 13px; font-weight: 700; }
+.wl-controls :is(input,select) { padding: 8px; border-radius: 8px; border: 1px solid var(--border,#d5dde4); }
+.wl-controls input[type=file] { max-width: 230px; }
+.wl-note { margin: 10px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+.wl-controls input[type=number] { width: 110px; }
+.wl-table td { vertical-align: top; }
+.wl-table :is(th,td) { min-width: 102px; }
+.wl-table td:nth-child(3) { min-width: 230px; }
+.wl-group th { text-transform: none; background: var(--brand,#356f61); color: white; }
+.wl-risk { color: var(--danger,#b42318); font-weight: 700; }
+.wl-page { display:flex; align-items:center; justify-content:space-between; gap: 8px; flex-wrap:wrap; }
+.wl-note a { color: inherit; text-decoration: underline; }

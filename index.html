@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="./css/style.css?v=abf24629ac" />
+  <link rel="stylesheet" href="./css/watchlist.css?v=1" />
 </head>
 <body>
 
@@ -49,6 +50,7 @@
         <span>Items</span>
       </button>
       <div class="nav-section-label" style="margin-top:16px">Operations</div>
+      <button class="nav-item" data-tab="watchlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>Stockout watchlist</span></button>
       <button class="nav-item" data-tab="priorities">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 1c5-5 9 4 14-1v10c-5 5-9-4-14 1"/></svg>
         <span>Buy Priorities</span>
@@ -129,6 +131,7 @@
           <div class="reorder-content">
             <span class="reorder-source">IMPORTED INVENTORY</span>
             <h2 id="reorderHeading">Reorder triggers</h2>
+            <button type="button" class="btn-ghost" data-tab="watchlist">Open stockout watchlist</button>
             <p>Export stockouts, low stock, and items for review from your imported inventory.</p>
             <button type="button" class="reorder-link" id="exportReorderTriggersBtn">
               Export to Excel
@@ -549,6 +552,41 @@
         </div>
       </section>
 
+            <section id="watchlist" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div><h1 class="page-title">Stockout watchlist</h1>
+          <p class="page-sub">Review projected shortages and spare minimums by department.</p></div>
+        </div>
+        <div class="section-card wl-body">
+          <div class="wl-controls">
+            <label>Stock snapshot date <input id="wlDate" type="date"></label>
+            <label>Default lead days <input id="wlLead" type="number" min="1" max="730" value="60"></label>
+            <label>Consumption snapshot <input id="wlBaseline" type="file" accept=".json"></label>
+            <label>Dated receipts <input id="wlReceipts" type="file" accept=".csv,.xlsx,.xls"></label>
+            <label>Dated requirements <input id="wlDemand" type="file" accept=".csv,.xlsx,.xls"></label>
+            <label>Department and planning inputs <input id="wlSettings" type="file" accept=".csv,.xlsx,.xls"></label>
+          </div>
+          <p class="wl-note"><button type="button" class="btn-ghost" id="wlTemplates">Download input templates</button></p>
+          <p class="wl-note">Consumption imports stay in this browser. InvDash stock takes precedence for matched materials. Other materials use the imported snapshot. Confirm that stock is current and available to MR01. Receipts enter on their due date. <span id="wlHistory"></span> Baseline bins and departments come from the Engineering Stores dashboard and can be overridden. Overdue receipts need a confirmed new date. For regular V1 items, dated demand replaces the average on days where it is higher. Requirements and receipts are complete snapshot imports.</p>
+          <p class="wl-note" id="wlImportState" role="status"></p>
+        </div>
+        <div class="section-card">
+          <div class="wl-body wl-controls">
+            <label>Search <input type="search" id="wlSearch" placeholder="Material, description or bin"></label>
+            <label>Department <select id="wlDepartment"><option value="">All departments</option></select></label>
+            <label>View <select id="wlFilter"><option value="">All materials</option><option value="risk">Projected shortages</option><option value="critical">Line-stop materials</option><option value="review">Needs review</option></select></label>
+            <button type="button" class="btn-ghost" id="wlExport">Export filtered list</button>
+          </div>
+          <div class="wl-body wl-page"><p id="wlSummary" role="status"></p>
+            <div><button type="button" class="btn-ghost" id="wlPrev">Previous</button>
+            <button type="button" class="btn-ghost" id="wlNext">Next</button></div></div>
+          <div class="table-wrap"><table class="wl-table" aria-label="Department stockout watchlist">
+            <thead><tr><th>Bin location</th><th>Material</th><th>Description</th><th>Criticality</th><th>Stock</th><th>Net consumption</th><th>Suggested reorder point</th><th>Shortage date</th><th>First gap</th><th>Next receipt</th><th>Suggested qty</th><th>Action</th></tr></thead>
+            <tbody id="wlRows"></tbody>
+          </table></div>
+        </div>
+      </section>
+
       <section id="priorities" class="tab-section" style="display:none">
         <div class="page-header">
           <div>
@@ -622,6 +660,8 @@
   </button>
 </nav>
 
-<script src="./js/app.js?v=acd55e1b4b"></script>
+<script src="./js/app.js?v=stockout1"></script>
+<script src="./js/watchlist-model.js?v=1"></script>
+<script src="./js/watchlist.js?v=1"></script>
 </body>
 </html>
