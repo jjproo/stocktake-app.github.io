@@ -7,7 +7,7 @@
 .wl-controls input[type=number] { width: 110px; }
 .wl-table td { vertical-align: top; }
 .wl-table :is(th,td) { min-width: 102px; }
-.wl-table td:nth-child(3) { min-width: 230px; }
+.wl-table td:nth-child(2) { min-width: 230px; }
 .wl-group th { text-transform: none; background: var(--brand,#356f61); color: white; }
 .wl-risk { color: var(--danger,#b42318); font-weight: 700; }
 .wl-page { display:flex; align-items:center; justify-content:space-between; gap: 8px; flex-wrap:wrap; }
