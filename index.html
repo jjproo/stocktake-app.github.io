@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="./css/style.css?v=abf24629ac" />
-  <link rel="stylesheet" href="./css/watchlist.css?v=1" />
+  <link rel="stylesheet" href="./css/watchlist.css?v=2" />
 </head>
 <body>
 
@@ -574,6 +574,7 @@
           <div class="wl-body wl-controls">
             <label>Search <input type="search" id="wlSearch" placeholder="Material, description or bin"></label>
             <label>Department <select id="wlDepartment"><option value="">All departments</option></select></label>
+            <label>Machine <select id="wlMachine"><option value="">All machines</option></select></label>
             <label>View <select id="wlFilter"><option value="">All materials</option><option value="risk">Projected shortages</option><option value="critical">Line-stop materials</option><option value="review">Needs review</option></select></label>
             <button type="button" class="btn-ghost" id="wlExport">Export filtered list</button>
           </div>
@@ -581,7 +582,7 @@
             <div><button type="button" class="btn-ghost" id="wlPrev">Previous</button>
             <button type="button" class="btn-ghost" id="wlNext">Next</button></div></div>
           <div class="table-wrap"><table class="wl-table" aria-label="Department stockout watchlist">
-            <thead><tr><th>Bin location</th><th>Material</th><th>Description</th><th>Criticality</th><th>Stock</th><th>Net consumption</th><th>Suggested reorder point</th><th>Shortage date</th><th>First gap</th><th>Next receipt</th><th>Suggested qty</th><th>Action</th></tr></thead>
+            <thead><tr><th>Material</th><th>Description</th><th>Bin location</th><th>Machine</th><th>Criticality</th><th>Stock</th><th>Net consumption</th><th>Suggested reorder point</th><th>Shortage date</th><th>First gap</th><th>Next receipt</th><th>Suggested qty</th><th>Action</th></tr></thead>
             <tbody id="wlRows"></tbody>
           </table></div>
         </div>
@@ -662,6 +663,6 @@
 
 <script src="./js/app.js?v=stockout1"></script>
 <script src="./js/watchlist-model.js?v=1"></script>
-<script src="./js/watchlist.js?v=1"></script>
+<script src="./js/watchlist.js?v=3"></script>
 </body>
 </html>
