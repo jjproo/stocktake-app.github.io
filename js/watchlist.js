@@ -6,7 +6,7 @@
   const specifications = {
     receipts: ['Material', 'Date', 'Quantity'],
     demand: ['Material', 'Date', 'Quantity'],
-    settings: ['Material', 'Department', 'Bin', 'Criticality', 'Lead days', 'Safety stock', 'Critical minimum']
+    settings: ['Material', 'Department', 'Bin', 'Criticality', 'Lead days', 'Safety stock', 'Critical minimum', 'Machine']
   };
   const model = globalThis.StockoutModel;
   const pageSize = 75;
@@ -43,8 +43,8 @@
     const current = new Map(inventoryData.map(item => [key(item.StockCode),item]));
     const receipts = index(state.receipts), demand = index(state.demand);
     const settings = new Map(state.settings.map(row => [row.material,row]));
-    const source = new Map(baseline.map(([material,description,unit,mrp,stock,,rop,cap,safety,net,months,unitFlag,bin,department]) =>
-      [material,{material,description,unit,mrp,stock,rop,cap,safety,net,months,unitFlag,bin,department}]));
+    const source = new Map(baseline.map(([material,description,unit,mrp,stock,,rop,cap,safety,net,months,unitFlag,bin,department,machine]) =>
+      [material,{material,description,unit,mrp,stock,rop,cap,safety,net,months,unitFlag,bin,department,machine}]));
     for (const [material, item] of current) {
       if (!source.has(material)) source.set(material,{material, description:item.Description, unit:'', mrp:'', stock:item.QtyOnHand,
         rop:item.MinLevel || 0, cap:item.MaxLevel || 0, safety:0, net:0, months:0});
@@ -61,6 +61,7 @@
         description: stockItem?.Description || item.description,
         department: department ? department.replace(/(^|\s)\S/g, s => s.toUpperCase()) : 'Unassigned',
         bin: input.bin || stockItem?.DefaultBin || item.bin || '',
+        machine: key(input.machine || stockItem?.Machine || item.machine) || 'Unassigned',
         stock: stockItem?.QtyOnHand ?? item.stock,
         stockSource: stockItem ? 'InvDash' : 'Reorder workbook'
       };
@@ -78,19 +79,19 @@
     for (const row of visible) {
       if (department !== row.department) {
         department = row.department;
-        html += `<tr class="wl-group"><th colspan="12" scope="rowgroup">${esc(department)}</th></tr>`;
+        html += `<tr class="wl-group"><th colspan="13" scope="rowgroup">${esc(department)}</th></tr>`;
       }
       const date = row.shortage === null ? '—' : model.iso(row.shortage);
       html += `<tr><td class="mono">${esc(row.material)}</td>
         <td>${esc(row.description)}<br><small>${esc(row.mrp || 'MRP unassigned')} · ${esc(row.unit || 'UoM unassigned')}</small></td>
-        <td>${esc(row.bin || '—')}</td>
+        <td>${esc(row.bin || '—')}</td><td>${esc(row.machine)}</td>
         <td class="${row.priority === 0 || row.critical === 'Line stop' ? 'wl-risk' : ''}">${esc(row.critical)}</td>
         <td>${format(row.stock)}<br><small>${esc(row.stockSource)}</small></td><td>${format(row.net)}</td><td><strong>${format(row.reorder)}</strong><br><small>${esc(row.reorderBasis)}</small></td>
         <td class="${row.priority === 0 ? 'wl-risk' : ''}">${date}</td><td>${row.shortage === null ? '—' : format(row.shortQty)}</td>
         <td>${row.nextReceipt === null ? '—' : model.iso(row.nextReceipt)}</td><td>${format(row.replenishment)}</td>
         <td><strong>${esc(row.status)}</strong>${row.nextAction === row.status ? '' : `<br><small>${esc(row.nextAction)}</small>`}</td></tr>`;
     }
-    $wl('wlRows').innerHTML = html || '<tr><td colspan="12">No materials match the filters.</td></tr>';
+    $wl('wlRows').innerHTML = html || '<tr><td colspan="13">No materials match the filters.</td></tr>';
     $wl('wlSummary').textContent = filtered.length ? `Showing ${number.format(start+1)}–${number.format(start+visible.length)} of ${number.format(filtered.length)} materials` : '0 materials';
     $wl('wlNext').disabled = page >= last;
     $wl('wlPrev').disabled = page === 0;
@@ -116,8 +117,14 @@
     const search = key($wl('wlSearch').value).toLowerCase();
     const mode = $wl('wlFilter').value;
     const department = $wl('wlDepartment').value;
+    const machineSelect = $wl('wlMachine');
+    const priorMachine = machineSelect.value;
+    const machines = Array.from(new Set(rows.filter(row => !department || row.department === department).map(row => row.machine))).sort((a,b) => a.localeCompare(b));
+    machineSelect.replaceChildren(new Option('All machines',''),...machines.map(name => new Option(name,name)));
+    if (machines.includes(priorMachine)) machineSelect.value = priorMachine;
+    const machine = machineSelect.value;
     filtered = rows.filter(row =>
-      (!department || row.department === department) &&
+      (!department || row.department === department) && (!machine || row.machine === machine) &&
       (!search || [row.material,row.description,row.bin].some(value => key(value).toLowerCase().includes(search))) &&
       (!mode || (mode === 'risk' && row.shortage !== null) || (mode === 'critical' && row.critical === 'Line stop') || (mode === 'review' && row.priority < 4)));
     filtered.sort((a,b) => a.department.localeCompare(b.department)
@@ -166,7 +173,7 @@
         seen.add(material);
         const critical = key(get('Criticality'));
         if (critical && !['Line stop','Standard'].includes(critical)) fail('Criticality must be Line stop or Standard.');
-        return {material, department:key(get('Department')), bin:key(get('Bin')), critical,
+        return {material, department:key(get('Department')), bin:key(get('Bin')), machine:key(get('Machine')), critical,
           lead:numeric('Lead days',1,730,true), safety:numeric('Safety stock',0,Infinity), minimum:numeric('Critical minimum',0,Infinity)};
       }
       const inputDate = get('Date');
@@ -213,7 +220,7 @@
     const settings = new Map(state.settings.map(row => [row.material,row]));
     const rows = loaded ? build().map(row => {
       const input = settings.get(row.material) || {};
-      return [row.material,row.department === 'Unassigned' ? '' : row.department,row.bin,row.critical === 'Unclassified' ? '' : row.critical,input.lead,input.safety,input.minimum];
+      return [row.material,row.department === 'Unassigned' ? '' : row.department,row.bin,row.critical === 'Unclassified' ? '' : row.critical,input.lead,input.safety,input.minimum,row.machine === 'Unassigned' ? '' : row.machine];
     }) : [];
     XLSX.utils.sheet_add_aoa(book.Sheets.settings,rows,{origin:'A2'});
     XLSX.writeFile(book,'InvDash stockout import templates.xlsx');
@@ -223,12 +230,12 @@
       const raw = String(value ?? '');
       return '"' + (typeof value === 'string' && /^[=+@-]/.test(raw) ? "'" + raw : raw).replaceAll('"','""') + '"';
     };
-    const heading = ['Material','Description','Bin location','Department','MRP','Criticality','Stock','Stock source','Net consumption','History days','Current reorder point','Suggested reorder point','Reorder basis','Lead days','Shortage date','First gap','Next receipt','Suggested qty','Status','Action'];
-    const data = filtered.map(r=>[r.material,r.description,r.bin,r.department,r.mrp,r.critical,r.stock,r.stockSource,r.net,historyDays,r.rop,r.reorder,r.reorderBasis,r.lead,
+    const heading = ['Material','Description','Bin location','Machine','Department','MRP','Criticality','Stock','Stock source','Net consumption','History days','Current reorder point','Suggested reorder point','Reorder basis','Lead days','Shortage date','First gap','Next receipt','Suggested qty','Status','Action'];
+    const data = filtered.map(r=>[r.material,r.description,r.bin,r.machine,r.department,r.mrp,r.critical,r.stock,r.stockSource,r.net,historyDays,r.rop,r.reorder,r.reorderBasis,r.lead,
       model.iso(r.shortage),r.shortage === null ? '' : r.shortQty,model.iso(r.nextReceipt),r.replenishment,r.status,r.nextAction]);
     saveFile('InvDash stockout watchlist.csv',[heading,...data].map(row=>row.map(safe).join(',')).join('\r\n'),'text/csv;charset=utf-8');
   });
-  for (const id of ['wlDepartment','wlFilter','wlDate','wlLead']) $wl(id).addEventListener('change', () => {
+  for (const id of ['wlDepartment','wlMachine','wlFilter','wlDate','wlLead']) $wl(id).addEventListener('change', () => {
     if (id === 'wlDate' || id === 'wlLead') {
       state.date = $wl('wlDate').value;
       state.lead = Number($wl('wlLead').value);
@@ -249,9 +256,9 @@
     }
     const materials = new Set();
     for (const row of data.rows) {
-      if (!Array.isArray(row) || row.length !== 14 || typeof row[0] !== 'string' || !row[0].trim() ||
+      if (!Array.isArray(row) || ![14,15].includes(row.length) || typeof row[0] !== 'string' || !row[0].trim() ||
           materials.has(row[0]) || ![4,5,6,7,8,9,10].every(i => Number.isFinite(row[i])) ||
-          ![1,2,3,11,12,13].every(i => typeof row[i] === 'string')) {
+          (row.length === 15 && typeof row[14] !== 'string') || ![1,2,3,11,12,13].every(i => typeof row[i] === 'string')) {
         throw new Error('The snapshot contains invalid or duplicate material rows.');
       }
       materials.add(row[0]);
