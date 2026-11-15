@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventory-mobile-offline-v5';
+const CACHE_NAME = 'inventory-mobile-offline-v6';
 const CACHE_PREFIX = 'inventory-mobile-offline-';
 const scope = new URL(self.registration.scope);
 const index = new URL('index.html', scope);
@@ -9,7 +9,7 @@ const assets = [
   'js/app.js?v=stockout1',
   'css/watchlist.css?v=2',
   'js/watchlist-model.js?v=1',
-  'js/watchlist.js?v=2',
+  'js/watchlist.js?v=3',
   'sample-data.json',
   'icons/icon-192.png',
   'icons/icon-512.png'
